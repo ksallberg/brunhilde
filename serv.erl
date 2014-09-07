@@ -7,17 +7,16 @@
 -behaviour(gen_server).
 
 start() ->
-   io:format("~s",["HELLO!"]).
+   io:format("~s", ["HELLO!"]).
 
+code_change(_, _, _) -> ok.
 
-code_change(_,_,_) -> ok.
+handle_call(_, _, _) -> ok.
 
-handle_call(_,_,_) -> ok.
+handle_cast(_, _) -> ok.
 
-handle_cast(_,_) -> ok.
-
-handle_info(_,_) -> ok.
+handle_info(_, _) -> ok.
 
 init(_) -> ok.
 
-terminate(_,_) -> ok.
+terminate(_, _) -> ok.
