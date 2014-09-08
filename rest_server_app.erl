@@ -1,4 +1,4 @@
--module(rest_app).
+-module(rest_server_app).
 -author('kristian@purestyle.se').
 
 -behaviour(application).
