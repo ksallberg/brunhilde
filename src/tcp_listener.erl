@@ -17,6 +17,18 @@ start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, Module], []).
 
 init([Port, Module]) ->
+    process_flag(trap_exit, true),
+    Opts = [binary, {packet, 2}, {reuseaddr, true}, {keepalive, true},
+            {backlog, 30}, {active, false}],
+    case gen_tcp:listen(Port, Opts) of
+        {ok, Listen} ->
+            {ok, Ref} = prim_inet:async_accept(Listen, -1),
+            {ok, #state{listener = Listen,
+                        acceptor = Ref,
+                        module   = Module}};
+        {error, Reason} ->
+            {stop, Reason}
+    end.
 
 handle_call(Request, _From, State) ->
     {stop, {unknown_call, Request}, State}.
@@ -45,7 +57,7 @@ handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
 
     catch exit:Why ->
         error_logger:error_msg("Error in async accept ~p.~n", [Why]),
-        {stop, Error, State}
+        {stop, Why, State}
     end;
 
 handle_info({inet_async, ListSock, Ref, Error},
