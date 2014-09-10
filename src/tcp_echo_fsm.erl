@@ -14,7 +14,7 @@
                  addr    %% client address
                }).
 
--define(TIMEOUT, 120000).
+-define(TIMEOUT, infinity).
 
 start_link() ->
     gen_fsm:start_link(?MODULE, [], []).
@@ -37,6 +37,7 @@ wait_for_socket(Other, State) ->
     {next_state, wait_for_socket, State}.
 
 wait_for_data({data, Data}, #state{socket=S} = State) ->
+    io:format("Receiving data: ~p~n", [Data]),
     ok = gen_tcp:send(S, Data),
     {next_state, wait_for_data, State, ?TIMEOUT};
 
