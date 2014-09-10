@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:2222",
+                    data: { name: "John", location: "Boston" }
+                }).done(function( msg ) {
+                    alert( "Data Saved: " + msg );
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="div1"></div>
+    </body>
+</html>

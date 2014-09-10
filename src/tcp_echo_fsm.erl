@@ -20,6 +20,7 @@ start_link() ->
     gen_fsm:start_link(?MODULE, [], []).
 
 set_socket(Pid, Socket) when is_pid(Pid), is_port(Socket) ->
+    io:format("kommer hit~n"),
     gen_fsm:send_event(Pid, {socket_ready, Socket}).
 
 init([]) ->
@@ -27,7 +28,8 @@ init([]) ->
     {ok, wait_for_socket, #state{}}.
 
 wait_for_socket({socket_ready, Socket}, State) when is_port(Socket) ->
-    inet:setopts(Socket, [{active, once}, {packet, 2}, binary]),
+    io:format("client connecting!~p ~n", [Socket]),
+    inet:setopts(Socket, [{active, once}, binary]),
     {ok, {IP, _Port}} = inet:peername(Socket),
     {next_state, wait_for_data, State#state{socket=Socket, addr=IP}, ?TIMEOUT};
 
@@ -42,6 +44,7 @@ wait_for_data({data, Data}, #state{socket=S} = State) ->
     {next_state, wait_for_data, State, ?TIMEOUT};
 
 wait_for_data(timeout, State) ->
+    io:format("timeout...~n"),
     error_logger:error_msg("~p Client connection timeout.~n", [self()]),
     {stop, normal, State};
 
