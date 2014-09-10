@@ -14,13 +14,8 @@ start_client() ->
     supervisor:start_child(tcp_client_sup, []).
 
 start(_Type, _Args) ->
-    case application:get_env(application:get_application(), listen_port) of
-        {ok, Val} -> Val;
-        _         -> case init:get_argument(listen_port) of
-                         [[Val | _]] -> Val;
-                         error       -> ?DEF_PORT
-                     end
-    end.
+    Listen = get_app_env(listen_port, ?DEF_PORT),
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_echo_fsm]).
 
 stop(_S) -> ok.
 
@@ -65,3 +60,12 @@ init([Module]) ->
             ]
         }
     }.
+
+get_app_env(Opt, Default) ->
+    case application:get_env(application:get_application(), Opt) of
+        {ok, Val} -> Val;
+        _ -> case init:get_argument(Opt) of
+                 [[Val|_]] -> Val;
+                 error     -> Default
+             end
+    end.

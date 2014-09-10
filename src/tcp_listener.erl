@@ -44,7 +44,7 @@ handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
             {error, Reason} -> exit({set_sockopt, Reason})
         end,
 
-        {ok, Pid} = tcp_server_app:start_client(),
+        {ok, Pid} = rest_server_app:start_client(),
         gen_tcp:controlling_process(CliSock, Pid),
         Module:set_socket(Pid, CliSock),
 
