@@ -1,4 +1,4 @@
--module(tcp_echo_fsm).
+-module(tcp_reply_fsm).
 -author('kristian@purestyle.se').
 
 -behaviour(gen_fsm).

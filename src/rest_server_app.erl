@@ -15,7 +15,7 @@ start_client() ->
 
 start(_Type, _Args) ->
     Listen = get_app_env(listen_port, ?DEF_PORT),
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_echo_fsm]).
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply_fsm]).
 
 stop(_S) -> ok.
 
