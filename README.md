@@ -1,5 +1,23 @@
 erlrest
 =======
 
-a rest server which will listen for certain routes and will be able
-to communicate in json and xml to start with
+Erlang/OTP rest server listening for user specified routes.
+
+<br/>
+
+Communicating in json.
+
+<br/>
+
+<h3>Usage:</h3>
+
+make all
+
+<br/>
+
+In erlang shell:
+<br/>
+<strong>
+Eshell V6.0  (abort with ^G)
+1> application:start(rest_server).
+</strong>
