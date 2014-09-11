@@ -1,5 +1,5 @@
 -module(http_parser).
--export([parse_request/1]).
+-export([parse_request/1, response/1]).
 
 % Parse a request and return the
 % request, headers and body as a tuple
@@ -49,3 +49,6 @@ header([C|R0]) ->
 
 message_body(R) ->
     {R, []}.
+
+response(Body) ->
+    "HTTP/1.1 200 OK\r\n" ++ "\r\n" ++ Body.

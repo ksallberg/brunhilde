@@ -20,7 +20,6 @@ start_link() ->
     gen_fsm:start_link(?MODULE, [], []).
 
 set_socket(Pid, Socket) when is_pid(Pid), is_port(Socket) ->
-    io:format("kommer hit~n"),
     gen_fsm:send_event(Pid, {socket_ready, Socket}).
 
 init([]) ->
@@ -29,7 +28,7 @@ init([]) ->
 
 wait_for_socket({socket_ready, Socket}, State) when is_port(Socket) ->
     io:format("client connecting!~p ~n", [Socket]),
-    inet:setopts(Socket, [{active, once}, binary]),
+    inet:setopts(Socket, [list, {active, once}]),
     {ok, {IP, _Port}} = inet:peername(Socket),
     {next_state, wait_for_data, State#state{socket=Socket, addr=IP}, ?TIMEOUT};
 
@@ -39,9 +38,12 @@ wait_for_socket(Other, State) ->
     {next_state, wait_for_socket, State}.
 
 wait_for_data({data, Data}, #state{socket=S} = State) ->
-    io:format("Receiving data: ~p~n", [Data]),
-    ok = gen_tcp:send(S, Data),
-    {next_state, wait_for_data, State, ?TIMEOUT};
+    {Request, Headers, Body} = http_parser:parse_request(Data),
+    io:format("saker fatt ~p~n", [{Request, Headers, Body}]),
+    Answer = route_handler:match("/some/route/other", "hej"),
+    ok = gen_tcp:send(S, http_parser:response("Answer")),
+    gen_tcp:close(S),
+    {stop, normal, State};
 
 wait_for_data(timeout, State) ->
     io:format("timeout...~n"),
