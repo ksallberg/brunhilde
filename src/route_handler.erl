@@ -6,6 +6,8 @@
 %% Register the player, OR error
 match("/battleship/register/", {[Json]}) ->
     %% look at the Json, do something, and reply with a new json
+    io:format("ets: ~p~n", [ets:lookup(global_memory, hello)]),
+    ets:insert(global_memory, {hello, mister}),
     {_PlayerNameTag, PlayerName} = Json,
     _NewBoard = battle_ship:new_board(),
     {[{<<"welcome">>, PlayerName}]};
