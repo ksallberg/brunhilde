@@ -5,6 +5,9 @@ Erlang/OTP rest server listening for user specified routes.
 <br/>
 Communicating in json.
 <br/>
+<h3>Requires:</h3>
+erlang-jiffy
+<br/>
 <h3>Usage:</h3>
 make all
 <br/>

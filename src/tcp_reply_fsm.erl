@@ -10,6 +10,8 @@
 
 -export([wait_for_socket/2, wait_for_data/2]).
 
+-import(jiffy, [decode/1]).
+
 -record(state, { socket, %% client socket
                  addr    %% client address
                }).
@@ -27,7 +29,6 @@ init([]) ->
     {ok, wait_for_socket, #state{}}.
 
 wait_for_socket({socket_ready, Socket}, State) when is_port(Socket) ->
-    io:format("client connecting!~p ~n", [Socket]),
     inet:setopts(Socket, [list, {active, once}]),
     {ok, {IP, _Port}} = inet:peername(Socket),
     {next_state, wait_for_data, State#state{socket=Socket, addr=IP}, ?TIMEOUT};
@@ -37,11 +38,13 @@ wait_for_socket(Other, State) ->
                            [Other]),
     {next_state, wait_for_socket, State}.
 
+%% Handle the actual client connecting and requesting something
 wait_for_data({data, Data}, #state{socket=S} = State) ->
-    {Request, Headers, Body} = http_parser:parse_request(Data),
-    io:format("saker fatt ~p~n", [{Request, Headers, Body}]),
-    Answer = route_handler:match("/some/route/other", "hej"),
-    ok = gen_tcp:send(S, http_parser:response("Answer")),
+    {{get, Route, v11}, _Headers, Body} = http_parser:parse_request(Data),
+    JsonObj    = jiffy:decode(Body),
+    Answer     = route_handler:match(Route, JsonObj),
+    JsonReturn = jiffy:encode(Answer),
+    ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S),
     {stop, normal, State};
 
