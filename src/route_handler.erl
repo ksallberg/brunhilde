@@ -26,7 +26,8 @@ match("/battleship/reset/", Json) ->
     Json;
 
 match("/battleship/info/", _) ->
-    <<"This is a battleship game to show how to use erlrest">>;
+    {[{<<"info_text">>,
+       <<"This is a battleship game to show how to use erlrest">>}]};
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
