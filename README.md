@@ -11,11 +11,12 @@ erlang-jiffy
 <h3>Usage:</h3>
 make all
 <br/>
-In erlang shell:
+. start.sh
 <br/>
+<h5>To stop:</h5>
 <strong>
 Eshell V6.0  (abort with ^G)<br/>
-1> application:start(rest_server).<br/>
+1> application:stop(rest_server).<br/>
 ok
 </strong>
 <h3>Info:</h3>
