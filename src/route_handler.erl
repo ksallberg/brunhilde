@@ -35,7 +35,7 @@ match("/battleship/shoot/", Json) ->
     {[{<<"player_name">>, PlayerName},
       {<<"shoot_at">>, Coordinates}
      ]} = Json,
-    Players = ets:lookup(global_memory, players),
+    [{players, Players}] = ets:lookup(global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
@@ -50,22 +50,23 @@ match("/battleship/shoot/", Json) ->
 
 %% returns the game board
 match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
-    Players = ets:lookup(global_memory, players),
+    [{players, Players}] = ets:lookup(global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
             {[{<<"error">>, <<"no such player">>}]};
         _ ->
-            OriginalGameBoard = ets:lookup(global_memory, game_board),
+            [{game_board, OriginalGameBoard}]
+                = ets:lookup(global_memory, game_board),
             Shots = Player#player.shots,
             PlayerGameBoard = battle_ship:add_shots(Shots, OriginalGameBoard),
-            {[{PlayerName, PlayerGameBoard}]}
+            {[{PlayerName, battle_ship:to_binary(PlayerGameBoard)}]}
     end;
 
 %% FIXME: Not implemented
 %% See all players and their current game boards.
 match("/battleship/radar_all/", _) ->
-    OriginalGameBoard = ets:lookup(global_memory, game_board),
+    [{game_board, OriginalGameBoard}] = ets:lookup(global_memory, game_board),
     {[{<<"radar for all players">>,
        OriginalGameBoard
       }]};
