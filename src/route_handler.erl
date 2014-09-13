@@ -60,7 +60,9 @@ match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
                 = ets:lookup(global_memory, game_board),
             Shots = Player#player.shots,
             PlayerGameBoard = battle_ship:add_shots(Shots, OriginalGameBoard),
-            {[{PlayerName, battle_ship:to_binary(PlayerGameBoard)}]}
+            Hidden = battle_ship:hide_ships(PlayerGameBoard),
+            {[{PlayerName, battle_ship:to_binary(Hidden)},
+              {<<"won">>, battle_ship:finished(PlayerGameBoard)}]}
     end;
 
 %% FIXME: Not implemented

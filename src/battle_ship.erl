@@ -1,5 +1,6 @@
 -module(battle_ship).
--export([new_board/0, only_water/0, add_shots/2, add_shot/2, to_binary/1]).
+-export([new_board/0, only_water/0, add_shots/2,
+         add_shot/2, to_binary/1, hide_ships/1, finished/1]).
 
 new_board() -> hard_coded_board().
 
@@ -41,6 +42,15 @@ add_shot([XCord, YCord], Board) ->
     {B,  ChsAfter}  = lists:split(XCord+1, LineToMod),
     ChsBefore       = lists:sublist(B, length(B) - 1),
     LinesBefore ++ [ChsBefore ++ "x" ++ ChsAfter] ++ LinesAfter.
+
+finished(Board) ->
+    case string:chr(lists:flatten(Board), $o) of
+        0 -> <<"yes">>;
+        _ -> <<"no">>
+    end.
+
+hide_ships(Board) ->
+    [re:replace(Line, "\\o+", "~", [global, {return, list}]) || Line <- Board].
 
 to_binary(Board) ->
     [list_to_binary(Line) || Line <- Board].
