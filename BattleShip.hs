@@ -5,10 +5,13 @@ module BattleShip where
 import           Control.Monad.Trans.Resource
 import           Control.Monad.IO.Class
 import           Data.Aeson
+import           Data.Maybe
 import           GHC.Generics
 import           Network.HTTP.Conduit
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy  as LBS
+
+import qualified Data.ByteString.Lazy.Char8 as LBS8
 
 data RequestData = RequestData
     { player_name :: String
@@ -38,16 +41,18 @@ main = do
     -- register
     let usr   = RequestData {player_name = "berra", shoot_at = Nothing}
         shot  = RequestData {player_name = "berra", shoot_at = Just [3, 2]}
-    putStrLn (show $ encode shot)
-    reg_resp   <- makeRequest "http://192.168.1.89:2222/battleship/register/"
+        coord = show . fromJust $ shoot_at shot
+        shotstr = "{\"player_name\":\"" ++ player_name shot ++
+                  "\", \"shoot_at\":" ++ coord ++ "}"
+    reg_resp   <- makeRequest "http://localhost:2222/battleship/register/"
                               (encode usr)
---    shot_resp  <- makeRequest "http://192.168.1.89:2222/battleship/shoot/"
---                              (encode shot)
-    radar_resp <- makeRequest "http://192.168.1.89:2222/battleship/radar/"
+    radar_resp <- makeRequest "http://localhost:2222/battleship/radar/"
                               (encode usr)
+    shot_resp  <- makeRequest "http://localhost:2222/battleship/shoot/"
+                              (LBS8.pack shotstr)
     print $ responseBody reg_resp
-    --print $ responseBody shot_resp
     print $ responseBody radar_resp
+    print $ responseBody shot_resp
 
 makeRequest :: (MonadThrow m, MonadIO m, MonadBaseControl IO m) =>
                String -> LBS.ByteString -> m (Response LBS.ByteString)
