@@ -24,13 +24,18 @@ data ResponseData = ResponseData
 data Radar = Radar
     { board :: [String]
     , won   :: String
-    } deriving (Show, Generic)
+    } deriving (Generic)
 
 type PlayerName = String
 type Route = String
 
 instance FromJSON ResponseData
 instance FromJSON Radar
+
+instance Show Radar where
+    show (Radar board won) = "Radar feedback\n" ++
+                             "Won? " ++ (show won) ++ "\n" ++
+                             (concat [line ++ "\n"| line <- board])
 
 toJson :: RequestData -> String
 toJson (RequestData name Nothing) =
