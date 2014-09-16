@@ -10,7 +10,6 @@ import           GHC.Generics
 import           Network.HTTP.Conduit
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy  as LBS
-
 import qualified Data.ByteString.Lazy.Char8 as LBS8
 
 data RequestData = RequestData
@@ -23,8 +22,8 @@ data ResponseData = ResponseData
     } deriving (Show, Generic)
 
 data Radar = Radar
-    { game_board :: [String]
-    , won        :: String
+    { board :: [String]
+    , won   :: String
     } deriving (Show, Generic)
 
 instance FromJSON ResponseData
@@ -47,9 +46,12 @@ main = do
     reg_resp   <- makeRequest (host++"/battleship/register/") (LBS8.pack usr)
     radar_resp <- makeRequest (host++"/battleship/radar/")    (LBS8.pack usr)
     shot_resp  <- makeRequest (host++"/battleship/shoot/")    (LBS8.pack shot)
-    print $ responseBody reg_resp
-    print $ responseBody radar_resp
-    print $ responseBody shot_resp
+    let regJson = decode (responseBody reg_resp)   :: Maybe ResponseData
+        radJson = decode (responseBody radar_resp) :: Maybe Radar
+        shoJson = decode (responseBody shot_resp)  :: Maybe ResponseData
+    putStrLn $ (show . fromJust) regJson
+    putStrLn $ (show . fromJust) radJson
+    putStrLn $ (show . fromJust) shoJson
 
 makeRequest :: (MonadThrow m, MonadIO m, MonadBaseControl IO m) =>
                String -> LBS.ByteString -> m (Response LBS.ByteString)

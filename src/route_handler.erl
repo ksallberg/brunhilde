@@ -61,9 +61,7 @@ match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
             Shots = Player#player.shots,
             PlayerGameBoard = battle_ship:add_shots(Shots, OriginalGameBoard),
             Hidden = battle_ship:hide_ships(PlayerGameBoard),
-            {[{<<"status">>, <<"ok">>},
-              {<<"player_name">>, PlayerName},
-              {<<"board">>, battle_ship:to_binary(Hidden)},
+            {[{<<"board">>, battle_ship:to_binary(Hidden)},
               {<<"won">>, battle_ship:finished(PlayerGameBoard)}]}
     end;
 
