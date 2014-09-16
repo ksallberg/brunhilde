@@ -26,7 +26,7 @@ match("/battleship/register/", {[Json]}) ->
         _  -> [{players, Ls}] = Players,
               ets:insert(global_memory, {players, Ls ++ [NewPlayer]})
     end,
-    {[{<<"welcome">>, PlayerName}]};
+    {[{<<"status">>, <<"welcome">>}]};
 
 %% Get the player name from Json,
 %% Find its corresponding game board,
@@ -39,13 +39,13 @@ match("/battleship/shoot/", Json) ->
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
-            {[{<<"error">>, <<"no such player">>}]};
+            {[{<<"status">>, <<"error, no such plauer">>}]};
         _ ->
             Shots      = Player#player.shots ++ [Coordinates],
             NewPlayer  = Player#player{shots=Shots},
             NewPlayers = lists:keyreplace(PlayerName, 2, Players, NewPlayer),
             ets:insert(global_memory, {players, NewPlayers}),
-            {[{<<"ok">>, <<"shot added">>}]}
+            {[{<<"status">>, <<"ok, shot added">>}]}
     end;
 
 %% returns the game board
@@ -54,14 +54,16 @@ match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
-            {[{<<"error">>, <<"no such player">>}]};
+            {[{<<"status">>, <<"error, no such player">>}]};
         _ ->
             [{game_board, OriginalGameBoard}]
                 = ets:lookup(global_memory, game_board),
             Shots = Player#player.shots,
             PlayerGameBoard = battle_ship:add_shots(Shots, OriginalGameBoard),
             Hidden = battle_ship:hide_ships(PlayerGameBoard),
-            {[{PlayerName, battle_ship:to_binary(Hidden)},
+            {[{<<"status">>, <<"ok">>},
+              {<<"player_name">>, PlayerName},
+              {<<"board">>, battle_ship:to_binary(Hidden)},
               {<<"won">>, battle_ship:finished(PlayerGameBoard)}]}
     end;
 
@@ -82,9 +84,9 @@ match("/battleship/reset/", {[Json]}) ->
             ets:delete_all_objects(global_memory),
             NewBoard  = battle_ship:new_board(),
             ets:insert(global_memory, {game_board, NewBoard}),
-            {[{<<"info_text">>, <<"ok, new round">>}]};
+            {[{<<"status">>, <<"ok, new round">>}]};
         _ ->
-            {[{<<"info_text">>, <<"wrong password">>}]}
+            {[{<<"status">>, <<"error, wrong password">>}]}
     end;
 
 match("/battleship/info/", _) ->

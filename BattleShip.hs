@@ -27,15 +27,10 @@ data Radar = Radar
     , won        :: String
     } deriving (Show, Generic)
 
---instance ToJSON RequestData where
---    toJSON (RequestData name Nothing)  = object ["player_name" .= name]
---    toJSON (RequestData name (Just x)) = object ["player_name" .= name,
---                                                 "shoot_at"    .= x]
-
 instance FromJSON ResponseData
 instance FromJSON Radar
 
-toJson (RequestData name Nothing)    =
+toJson (RequestData name Nothing) =
     "{\"player_name\":\"" ++ name ++"\"}"
 toJson (RequestData name (Just shot)) =
     "{\"player_name\":\"" ++ name ++ "\", \"shoot_at\":" ++ (show shot) ++ "}"
