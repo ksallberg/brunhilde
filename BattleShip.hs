@@ -59,21 +59,23 @@ main = do
     radar2 <- radar user
     putStrLn $ show radar2
 
+signup :: RequestData -> IO ResponseData
 signup user   = readResponse user "/battleship/register/"
+
+shoot :: RequestData -> IO ResponseData
 shoot user = readResponse user "/battleship/shoot/"
 
 readResponse :: RequestData -> Route -> IO ResponseData
 readResponse req route =
     do let usr = toJson req
-       response <- makeRequest (hostName ++ route) (LBS8.pack usr)
+       response <- makeRequest (hostName++route) (LBS8.pack usr)
        let m = decode (responseBody response) :: Maybe ResponseData
        return $ fromJust m
 
 radar :: RequestData -> IO Radar
 radar req =
     do let usr = toJson req
-       response <- makeRequest (hostName++"/battleship/radar/")
-                               (LBS8.pack usr)
+       response <- makeRequest (hostName++"/battleship/radar/") (LBS8.pack usr)
        let m = decode (responseBody response) :: Maybe Radar
        return $ fromJust m
 
