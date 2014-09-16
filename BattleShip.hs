@@ -27,29 +27,31 @@ data Radar = Radar
     , won        :: String
     } deriving (Show, Generic)
 
-instance ToJSON RequestData where
-    toJSON (RequestData name Nothing)  = object ["player_name" .= name]
-    toJSON (RequestData name (Just x)) = object ["player_name" .= name,
-                                                 "shoot_at"    .= x]
+--instance ToJSON RequestData where
+--    toJSON (RequestData name Nothing)  = object ["player_name" .= name]
+--    toJSON (RequestData name (Just x)) = object ["player_name" .= name,
+--                                                 "shoot_at"    .= x]
 
 instance FromJSON ResponseData
 instance FromJSON Radar
+
+toJson (RequestData name Nothing)    =
+    "{\"player_name\":\"" ++ name ++"\"}"
+toJson (RequestData name (Just shot)) =
+    "{\"player_name\":\"" ++ name ++ "\", \"shoot_at\":" ++ (show shot) ++ "}"
 
 main :: IO ()
 main = do
     putStrLn "Making HTTP request"
     -- register
-    let usr   = RequestData {player_name = "berra", shoot_at = Nothing}
-        shot  = RequestData {player_name = "berra", shoot_at = Just [3, 2]}
-        coord = show . fromJust $ shoot_at shot
-        shotstr = "{\"player_name\":\"" ++ player_name shot ++
-                  "\", \"shoot_at\":" ++ coord ++ "}"
-    reg_resp   <- makeRequest "http://localhost:2222/battleship/register/"
-                              (encode usr)
-    radar_resp <- makeRequest "http://localhost:2222/battleship/radar/"
-                              (encode usr)
-    shot_resp  <- makeRequest "http://localhost:2222/battleship/shoot/"
-                              (LBS8.pack shotstr)
+    let host    = "http://localhost:2222"
+        usr     = toJson $ RequestData { player_name = "berra"
+                                       , shoot_at = Nothing}
+        shot    = toJson $ RequestData { player_name = "berra"
+                                       , shoot_at = Just [3, 2]}
+    reg_resp   <- makeRequest (host++"/battleship/register/") (LBS8.pack usr)
+    radar_resp <- makeRequest (host++"/battleship/radar/")    (LBS8.pack usr)
+    shot_resp  <- makeRequest (host++"/battleship/shoot/")    (LBS8.pack shot)
     print $ responseBody reg_resp
     print $ responseBody radar_resp
     print $ responseBody shot_resp
