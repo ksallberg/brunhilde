@@ -27,6 +27,7 @@ data Radar = Radar
     } deriving (Show, Generic)
 
 type PlayerName = String
+type Route = String
 
 instance FromJSON ResponseData
 instance FromJSON Radar
@@ -43,38 +44,37 @@ hostName = "http://localhost:2222"
 main :: IO ()
 main = do
     putStrLn "Making HTTP request"
-    regPlayer <- registerPlayer "berra"
-    radar     <- radarPlayer    "berra"
-    sht       <- shootPlayer    "berra" [2,3]
+    let user = RequestData{ player_name = "berra", shoot_at = Nothing}
+        shot = RequestData{ player_name = "berra", shoot_at = Just [2,1]}
+    -- Register player
+    regPlayer <- signup user
     putStrLn $ show regPlayer
-    putStrLn $ show radar
+    -- Do radar
+    radar1 <- radar user
+    putStrLn $ show radar1
+    -- Shoot
+    sht <- shoot shot
     putStrLn $ show sht
+    -- Radar again
+    radar2 <- radar user
+    putStrLn $ show radar2
 
-registerPlayer :: PlayerName -> IO ResponseData
-registerPlayer name =
-    do let usr = toJson $ RequestData { player_name = name
-                                      , shoot_at = Nothing}
-       response <- makeRequest (hostName++"/battleship/register/")
-                               (LBS8.pack usr)
+signup user   = readResponse user "/battleship/register/"
+shoot user = readResponse user "/battleship/shoot/"
+
+readResponse :: RequestData -> Route -> IO ResponseData
+readResponse req route =
+    do let usr = toJson req
+       response <- makeRequest (hostName ++ route) (LBS8.pack usr)
        let m = decode (responseBody response) :: Maybe ResponseData
        return $ fromJust m
 
-radarPlayer :: PlayerName -> IO Radar
-radarPlayer name =
-    do let usr = toJson $ RequestData { player_name = name
-                                      , shoot_at = Nothing}
+radar :: RequestData -> IO Radar
+radar req =
+    do let usr = toJson req
        response <- makeRequest (hostName++"/battleship/radar/")
                                (LBS8.pack usr)
        let m = decode (responseBody response) :: Maybe Radar
-       return $ fromJust m
-
-shootPlayer :: PlayerName -> [Int] -> IO ResponseData
-shootPlayer name coord =
-    do let shot    = toJson $ RequestData { player_name = name
-                                          , shoot_at    = Just coord}
-       radar_resp <- makeRequest (hostName++"/battleship/shoot/")
-                                 (LBS8.pack shot)
-       let m = decode (responseBody radar_resp) :: Maybe ResponseData
        return $ fromJust m
 
 makeRequest :: (MonadThrow m, MonadIO m, MonadBaseControl IO m) =>
