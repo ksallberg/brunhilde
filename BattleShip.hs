@@ -2,12 +2,14 @@
 
 module BattleShip where
 
+import           Control.Concurrent
 import           Control.Monad.Trans.Resource
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Maybe
 import           GHC.Generics
 import           Network.HTTP.Conduit
+import           System.Random
 import qualified Data.ByteString.Lazy.Char8 as LBS8
 
 data RequestData = RequestData
@@ -24,6 +26,10 @@ data Radar = Radar
     , won   :: String
     } deriving (Generic)
 
+data Reset = Reset
+    { password :: String
+    } deriving (Show, Generic)
+
 data State = State
     { shots  :: [[Int]]
     , player :: RequestData
@@ -34,6 +40,7 @@ type Route      = String
 
 instance FromJSON ResponseData
 instance FromJSON Radar
+instance ToJSON   Reset
 
 instance Show Radar where
     show (Radar board won) = "Radar feedback\n" ++
@@ -51,27 +58,30 @@ hostName = "http://localhost:2222"
 
 main :: IO ()
 main = do
-    putStrLn "Making HTTP request"
     let user = RequestData{player_name = "berra", shoot_at = Nothing}
-        initialState = State{shots = [[2,1]], player = user}
+        initialState = State{shots = [], player = user}
+    reset
+    regPlayer <- signup user
+    putStrLn $ show regPlayer
     gameLoop initialState
 
 gameLoop :: State -> IO ()
-gameLoop (State shots player) = do
-    let shot = RequestData{player_name = player_name player,
-                           shoot_at = Just [2,1]}
-    -- Register player
-    regPlayer <- signup player
-    putStrLn $ show regPlayer
-    -- Do radar
-    radar1 <- radar player
-    putStrLn $ show radar1
+gameLoop state@(State shots player) = do
+    randX <- getStdRandom (randomR (0,9))
+    randY <- getStdRandom (randomR (0,9))
+    let shot  = RequestData{player_name = player_name player,
+                            shoot_at = Just [randX, randY]}
     -- Shoot
     sht <- shoot shot
     putStrLn $ show sht
     -- Radar again
     radar2 <- radar player
     putStrLn $ show radar2
+    putStrLn "Continue? y/n"
+    line <- getLine
+    case line of
+        "n" -> return ()
+        "y" -> gameLoop (state{shots = shots ++ [[randX, randY]]})
 
 signup :: RequestData -> IO ResponseData
 signup user = do body <- sendAndReadResponse user "/battleship/register/"
@@ -84,6 +94,11 @@ shoot user = do body <- sendAndReadResponse user "/battleship/shoot/"
 radar :: RequestData -> IO Radar
 radar user = do body <- sendAndReadResponse user "/battleship/radar/"
                 return $ fromJust ((decode body) :: Maybe Radar)
+
+reset :: IO ()
+reset = makeRequest (hostName++"/battleship/reset/")
+                    (encode Reset{password = "pretty please"})
+          >>= \_ -> return ()
 
 sendAndReadResponse :: RequestData -> Route -> IO LBS8.ByteString
 sendAndReadResponse req route =
