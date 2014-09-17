@@ -12,8 +12,12 @@
 
 -import(jiffy, [decode/1]).
 
--record(state, { socket, %% client socket
-                 addr    %% client address
+% State while receiving bytes from the tcp socket
+-record(state, { socket,      %% client socket
+                 addr,        %% client address
+                 data,        %% collected data
+                 body_length, %% total body length
+                 route
                }).
 
 -define(TIMEOUT, infinity).
@@ -31,22 +35,56 @@ init([]) ->
 wait_for_socket({socket_ready, Socket}, State) when is_port(Socket) ->
     inet:setopts(Socket, [list, {active, once}]),
     {ok, {IP, _Port}} = inet:peername(Socket),
-    {next_state, wait_for_data, State#state{socket=Socket, addr=IP}, ?TIMEOUT};
+    {next_state,
+     wait_for_data,
+     State#state{socket=Socket, addr=IP, data=[],
+                 body_length=unknown, route=unknown},
+     ?TIMEOUT};
 
 wait_for_socket(Other, State) ->
     error_logger:error_msg("State: wait_for_socket. Unexpected: ~p~n",
                            [Other]),
     {next_state, wait_for_socket, State}.
 
-%% Handle the actual client connecting and requesting something
-wait_for_data({data, Data}, #state{socket=S} = State) ->
-    {{get, Route, v11}, _Headers, Body} = http_parser:parse_request(Data),
+respond(#state{socket=S, data=Body, route=Route}) ->
     JsonObj    = jiffy:decode(Body),
     Answer     = route_handler:match(Route, JsonObj),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
-    gen_tcp:close(S),
-    {stop, normal, State};
+    gen_tcp:close(S).
+
+%% Handle the actual client connecting and requesting something
+wait_for_data({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
+    case length(DBuf++Data) == BL of
+        % everything downloaded
+        true ->
+            respond(State),
+            {stop, normal, State};
+        % no, keep downloading
+        false ->
+            case BL of
+                unknown ->
+                    {{_Method, Route, v11}, Headers, Body} =
+                        http_parser:parse_request(Data),
+                    NewBL     = get_content_length(Headers),
+                    NewRoute  = Route,
+                    NewState  = State#state{data=DBuf ++ Body,
+                                            body_length = NewBL,
+                                            route = NewRoute},
+                    %% After the new merge,
+                    %% check again if everything downloaded
+                    case length(NewState#state.data) == NewBL of
+                        true  ->
+                            respond(NewState),
+                            {stop, normal, NewState};
+                        false ->
+                            {next_state, wait_for_data, NewState, ?TIMEOUT}
+                    end;
+                _ ->
+                    NewState = State#state{data=DBuf ++ Data},
+                    {next_state, wait_for_data, NewState, ?TIMEOUT}
+            end
+    end;
 
 wait_for_data(timeout, State) ->
     io:format("timeout...~n"),
@@ -81,3 +119,10 @@ terminate(_Reason, _StateName, #state{socket=Socket}) ->
 
 code_change(_OldVsn, StateName, StateData, _Extra) ->
     {ok, StateName, StateData}.
+
+get_content_length(Headers) ->
+    A = lists:nth(1,
+                  [Len || [Desc,Len] <- [string:tokens(H," ") || H<-Headers],
+                       Desc=="Content-Length:"]),
+    {Num,_} = string:to_integer(A),
+    Num.

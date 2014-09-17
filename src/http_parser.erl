@@ -13,7 +13,13 @@ request_line([$G, $E, $T, 32 | R0]) ->
     {URI, R1}     = request_uri(R0),
     {Ver, R2}     = http_version(R1),
     [13, 10 | R3] = R2,
-    {{get, URI, Ver}, R3}.
+    {{get, URI, Ver}, R3};
+
+request_line([$P, $O, $S, $T, 32 | R0]) ->
+    {URI, R1}     = request_uri(R0),
+    {Ver, R2}     = http_version(R1),
+    [13, 10 | R3] = R2,
+    {{post, URI, Ver}, R3}.
 
 % 32 is the last byte of the request uri (space), R0 is the last rest
 request_uri([32|R0]) ->

@@ -54,7 +54,7 @@ toJson (RequestData name (Just shot)) =
     "{\"player_name\":\"" ++ name ++ "\", \"shoot_at\":" ++ (show shot) ++ "}"
 
 hostName :: String
-hostName = "http://localhost:2222"
+hostName = "http://192.168.1.89:2222"
 
 main :: IO ()
 main = do
