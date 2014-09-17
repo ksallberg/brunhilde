@@ -22,11 +22,16 @@ match("/battleship/register/", {[Json]}) ->
     Players   = ets:lookup(global_memory, players),
     NewPlayer = #player{player_name = PlayerName, shots = []},
     case Players of
-        [] -> ets:insert(global_memory, {players, [NewPlayer]});
+        [] -> ets:insert(global_memory, {players, [NewPlayer]}),
+              {[{<<"status">>, <<"welcome">>}]};
         _  -> [{players, Ls}] = Players,
-              ets:insert(global_memory, {players, Ls ++ [NewPlayer]})
-    end,
-    {[{<<"status">>, <<"welcome">>}]};
+              case lists:keysearch(PlayerName, #player.player_name, Ls) of
+                 false -> ets:insert(global_memory,
+                                     {players, Ls ++ [NewPlayer]}),
+                          {[{<<"status">>, <<"welcome">>}]};
+                 _ -> {[{<<"status">>, <<"error, already registered">>}]}
+              end
+    end;
 
 %% Get the player name from Json,
 %% Find its corresponding game board,

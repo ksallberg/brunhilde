@@ -27,7 +27,7 @@ hard_coded_board() ->
      "~~o~~~~~~~",
      "~~o~~~ooo~",
      "~~o~o~~~~~",
-     "~~~~o~o~~~"].
+     "~~~o~o~~~~"].
 
 %% Test: battle_ship:add_shots([[0,0], [0,1], [0,2], [9,9]], Board).
 add_shots(Shots, Board) ->
@@ -50,7 +50,7 @@ finished(Board) ->
     end.
 
 hide_ships(Board) ->
-    [re:replace(Line, "\\o+", "~", [global, {return, list}]) || Line <- Board].
+    [re:replace(Line, "\\o", "~", [global, {return, list}]) || Line <- Board].
 
 to_binary(Board) ->
     [list_to_binary(Line) || Line <- Board].
