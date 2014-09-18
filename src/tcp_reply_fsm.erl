@@ -47,6 +47,7 @@ wait_for_socket(Other, State) ->
     {next_state, wait_for_socket, State}.
 
 respond(#state{socket=S, data=Body, route=Route}) ->
+    io:format("data: ~p~n", [Body]),
     JsonObj    = jiffy:decode(Body),
     Answer     = route_handler:match(Route, JsonObj),
     JsonReturn = jiffy:encode(Answer),
@@ -58,8 +59,9 @@ wait_for_data({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
     case length(DBuf++Data) == BL of
         % everything downloaded
         true ->
-            respond(State),
-            {stop, normal, State};
+            NewState = State#state{data=DBuf++Data},
+            respond(NewState),
+            {stop, normal, NewState};
         % no, keep downloading
         false ->
             case BL of
