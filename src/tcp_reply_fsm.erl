@@ -47,7 +47,6 @@ wait_for_socket(Other, State) ->
     {next_state, wait_for_socket, State}.
 
 respond(#state{socket=S, data=Body, route=Route}) ->
-    io:format("data: ~p~n", [Body]),
     JsonObj    = jiffy:decode(Body),
     Answer     = route_handler:match(Route, JsonObj),
     JsonReturn = jiffy:encode(Answer),
