@@ -17,7 +17,8 @@
                  addr,        %% client address
                  data,        %% collected data
                  body_length, %% total body length
-                 route
+                 route,       %% route expressed as string()
+                 method       %% method expressed as atom(), get, post...
                }).
 
 -define(TIMEOUT, infinity).
@@ -46,9 +47,9 @@ wait_for_socket(Other, State) ->
                            [Other]),
     {next_state, wait_for_socket, State}.
 
-respond(#state{socket=S, data=Body, route=Route}) ->
+respond(#state{socket = S, data = Body, route = Route, method = Method}) ->
     JsonObj    = jiffy:decode(Body),
-    Answer     = route_handler:match(Route, JsonObj),
+    Answer     = route_handler:match(Method, Route, JsonObj),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S).
@@ -65,13 +66,14 @@ wait_for_data({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
         false ->
             case BL of
                 unknown ->
-                    {{_Method, Route, v11}, Headers, Body} =
+                    {{Method, Route, v11}, Headers, Body} =
                         http_parser:parse_request(Data),
                     NewBL     = get_content_length(Headers),
                     NewRoute  = Route,
-                    NewState  = State#state{data=DBuf ++ Body,
+                    NewState  = State#state{data        = DBuf ++ Body,
                                             body_length = NewBL,
-                                            route = NewRoute},
+                                            route       = NewRoute,
+                                            method      = Method},
                     %% After the new merge,
                     %% check again if everything downloaded
                     case length(NewState#state.data) == NewBL of

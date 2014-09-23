@@ -1,5 +1,5 @@
 -module(route_handler).
--export([match/2]).
+-export([match/3]).
 -import(battle_ship, [new_board/0]).
 
 %% tip: there is an application wide ets table
@@ -16,7 +16,7 @@
 
 %% Get the player name from Json,
 %% Register the player, OR error
-match("/battleship/register/", {[Json]}) ->
+match(post, "/battleship/register/", {[Json]}) ->
     %% look at the Json, do something, and reply with a new json
     {<<"player_name">>, PlayerName} = Json,
     Players   = ets:lookup(global_memory, players),
@@ -36,7 +36,7 @@ match("/battleship/register/", {[Json]}) ->
 %% Get the player name from Json,
 %% Find its corresponding game board,
 %% Shoot and update the game board, OR error
-match("/battleship/shoot/", Json) ->
+match(post, "/battleship/shoot/", Json) ->
     {[{<<"player_name">>, PlayerName},
       {<<"shoot_at">>, Coordinates}
      ]} = Json,
@@ -54,7 +54,7 @@ match("/battleship/shoot/", Json) ->
     end;
 
 %% returns the game board
-match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
+match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
     [{players, Players}] = ets:lookup(global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
@@ -72,7 +72,7 @@ match("/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
 
 %% FIXME: Not implemented
 %% See all players and their current game boards.
-match("/battleship/radar_all/", _) ->
+match(post, "/battleship/radar_all/", _) ->
     [{game_board, OriginalGameBoard}] = ets:lookup(global_memory, game_board),
     {[{<<"radar for all players">>,
        OriginalGameBoard
@@ -80,7 +80,7 @@ match("/battleship/radar_all/", _) ->
 
 %% Clear the database and create a new round
 %% of battleship with no players
-match("/battleship/reset/", {[Json]}) ->
+match(post, "/battleship/reset/", {[Json]}) ->
     {<<"password">>, Pw} = Json,
     case Pw of
         <<"pretty please">> ->
@@ -92,11 +92,11 @@ match("/battleship/reset/", {[Json]}) ->
             {[{<<"status">>, <<"error, wrong password">>}]}
     end;
 
-match("/battleship/info/", _) ->
+match(get, "/battleship/info/", _) ->
     {[{<<"info_text">>,
        <<"This is a battleship game to show how to use erlrest">>}]};
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
-match(_, _) ->
+match(_, _, _) ->
     {[{<<"error">>, <<"no route matching">>}]}.

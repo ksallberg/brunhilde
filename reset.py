@@ -4,8 +4,8 @@ import json
 import requests
 
 def call_rest(obj, addr):
-    r = requests.get(addr,
-                     data=json.dumps(obj))
+    r = requests.post(addr,
+                      data=json.dumps(obj))
     print "Now looking at the reply from: ", addr
     print r.url
     print r.text
