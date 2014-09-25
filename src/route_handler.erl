@@ -36,10 +36,11 @@ match(post, "/battleship/register/", {[Json]}) ->
 %% Get the player name from Json,
 %% Find its corresponding game board,
 %% Shoot and update the game board, OR error
+%% FIXME: Right now assumes the input format is correct, check it is
 match(post, "/battleship/shoot/", Json) ->
-    {[{<<"player_name">>, PlayerName},
-      {<<"shoot_at">>, Coordinates}
-     ]} = Json,
+    {Objs} = Json,
+    {_, PlayerName}  = lists:keyfind(<<"player_name">>, 1, Objs),
+    {_, Coordinates} = lists:keyfind(<<"shoot_at">>, 1, Objs),
     [{players, Players}] = ets:lookup(global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
