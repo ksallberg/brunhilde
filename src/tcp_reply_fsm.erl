@@ -47,6 +47,13 @@ wait_for_socket(Other, State) ->
                            [Other]),
     {next_state, wait_for_socket, State}.
 
+%% No request JSON given...
+respond(#state{socket = S, data = [],   route = Route, method = Method}) ->
+    Answer     = route_handler:match(Method, Route, no_json),
+    JsonReturn = jiffy:encode(Answer),
+    ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
+    gen_tcp:close(S);
+%% Request JSON given...
 respond(#state{socket = S, data = Body, route = Route, method = Method}) ->
     JsonObj    = jiffy:decode(Body),
     Answer     = route_handler:match(Method, Route, JsonObj),
@@ -124,8 +131,11 @@ code_change(_OldVsn, StateName, StateData, _Extra) ->
     {ok, StateName, StateData}.
 
 get_content_length(Headers) ->
-    A = lists:nth(1,
-                  [Len || [Desc,Len] <- [string:tokens(H," ") || H<-Headers],
-                       Desc=="Content-Length:"]),
-    {Num,_} = string:to_integer(A),
-    Num.
+    ConLen = [Len || [Desc,Len] <- [string:tokens(H," ")
+                  || H<-Headers],Desc=="Content-Length:"],
+    case ConLen of
+        [] -> 0;
+        _  -> A = lists:nth(1, ConLen),
+              {Num,_} = string:to_integer(A),
+              Num
+    end.

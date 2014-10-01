@@ -21,11 +21,15 @@ request_line([$P, $O, $S, $T, 32 | R0]) ->
 request_line([$D, $E, $L, $E, $T, $E, 32 | R0]) ->
     line_continue(delete, R0).
 
+throw_params(URI) ->
+    lists:takewhile(fun(X) -> X /= $? end, URI).
+
+% FIXME, for now just throwing away GET parameters
 line_continue(Method, R0) ->
     {URI, R1}     = request_uri(R0),
     {Ver, R2}     = http_version(R1),
     [13, 10 | R3] = R2,
-    {{Method, URI, Ver}, R3}.
+    {{Method, throw_params(URI), Ver}, R3}.
 
 % 32 is the last byte of the request uri (space), R0 is the last rest
 request_uri([32|R0]) ->
@@ -62,5 +66,7 @@ header([C|R0]) ->
 message_body(R) ->
     {R, []}.
 
+%% for now always send access-control-allow
 response(Body) ->
-    "HTTP/1.1 200 OK\r\n" ++ "\r\n" ++ Body.
+    "HTTP/1.1 200 OK\r\n" ++
+    "Access-Control-Allow-Origin: *\r\n"++ "\r\n" ++ Body.

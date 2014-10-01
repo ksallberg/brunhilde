@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                $.ajax({
+                    type: 'GET',
+                    error: function(e) {
+                       console.log(e);
+                    },
+                    url: 'http://localhost:2222/battleship/radar_all/',
+                    success: function(dataWeGotViaJsonp) {
+                        var text = dataWeGotViaJsonp;
+                        $('#resultBox').html(text);
+                    },
+                    timeout: function(a) {
+                        alert("noes");
+                    },
+                    done: function(a) {
+                        alert("o");
+                    }
+                });
+            })
+        </script>
+    </head>
+    <body>
+        <div id = 'resultBox'>hgej</div>
+    </body>
+</html>
