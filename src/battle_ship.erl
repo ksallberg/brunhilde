@@ -1,5 +1,5 @@
 -module(battle_ship).
--export([new_board/0, add_shots/2,
+-export([new_board/0, add_shots/2, to_visual_ships/1,
          add_shot/2, to_binary/1, to_visual/1, finished/1]).
 
 %% {x,y}
@@ -84,6 +84,25 @@ to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
                                                      Repr,
                                                      AccMatrix)
                               end, Matrix, Shots),
+                              ShotsAdded,
+    [lists:concat(Line) || Line <- ShotsAdded].
+
+to_visual_ships(#board{ship_list=Ls, size=Size, shots=Shots}) ->
+    Matrix      = matrix:new(Size, fun(_,_,_,_) -> "~" end),
+    MatrixShips = lists:foldl(fun({X, Y}, AccMatrix) ->
+                                  matrix:element_set(X + 1,
+                                                     Y + 1,
+                                                     "o", %% ship sq is o
+                                                     AccMatrix)
+                              end, Matrix, lists:flatten(Ls)),
+    ShipListMod = check_sunk_ships(Ls, Shots),
+    ShotsAdded  = lists:foldl(fun({X, Y}, AccMatrix) ->
+                                  Repr = repr_for_shot({X, Y}, ShipListMod),
+                                  matrix:element_set(X + 1,
+                                                     Y + 1,
+                                                     Repr,
+                                                     AccMatrix)
+                              end, MatrixShips, Shots),
                               ShotsAdded,
     [lists:concat(Line) || Line <- ShotsAdded].
 

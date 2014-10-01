@@ -75,18 +75,16 @@ match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
 match(get, "/battleship/radar_all/", _) ->
     [{players, Players}] = ets:lookup(global_memory, players),
     [{game_board, OriginalGameBoard}] = ets:lookup(global_memory, game_board),
-    io:format("~p~n", [Players]),
     ModPlayers =
         lists:map(
             fun(#player{shots=Shots, player_name=PlayerName}) ->
                 PlayerGameBoard =
                     battle_ship:add_shots(Shots, OriginalGameBoard),
-                Visual = battle_ship:to_visual(PlayerGameBoard),
+                Visual = battle_ship:to_visual_ships(PlayerGameBoard),
                     {[{<<"player_name">>, PlayerName},
                       {<<"board">>, battle_ship:to_binary(Visual)},
                       {<<"finished">>, battle_ship:finished(PlayerGameBoard)}]}
             end, Players),
-    io:format("~p~n", [ModPlayers]),
     {[{<<"radar all">>, ModPlayers}]};
 
 %% Clear the database and create a new round
