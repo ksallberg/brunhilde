@@ -11,30 +11,18 @@
 %% _______ MATRIX FUNCTIONS ________
 %% author: https://github.com/majelbstoat/Morgana/blob/master/src/matrix.erl
 
-new_matrix(Size, ContentGenerator) when is_function(ContentGenerator, 4) ->
-    new_matrix(Size, Size, ContentGenerator);
-new_matrix(Columns, Rows) ->
-    % Creates a rectangular matrix initialised to 0.
-    [[0 || _ <- lists:seq(1, Columns)] || _ <- lists:seq(1, Rows)].
-
 new_matrix(Columns, Rows, ContentGenerator) ->
     [[ContentGenerator(Column, Row, Columns, Rows) ||
       Column <- lists:seq(1, Columns)] || Row <- lists:seq(1, Rows)].
 
-dimensions(Matrix) ->
-    {length(lists:nth(1, Matrix)), length(Matrix)}.
-
-element_at(Column, Row, Matrix) ->
-    lists:nth(Column, lists:nth(Row, Matrix)).
-
 element_set(ElementColumn, ElementRow, Value, Matrix) ->
-    {Width, Height} = dimensions(Matrix),
+    {Width, Height} = {length(lists:nth(1, Matrix)), length(Matrix)},
     new_matrix(Width, Height, fun(Column, Row, _, _) ->
             case (Column == ElementColumn) andalso (Row == ElementRow) of
                 true ->
                     Value;
                 false ->
-                    element_at(Column, Row, Matrix)
+                    lists:nth(Column, lists:nth(Row, Matrix))
             end
         end).
 
@@ -107,7 +95,7 @@ check_sunk_ships(ShipList, Shots) ->
     [ship_is_sunk(Ship, Shots) || Ship <- ShipList].
 
 to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
-    Matrix      = new_matrix(Size, fun(_,_,_,_) -> "~" end),
+    Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "~" end),
     ShipListMod = check_sunk_ships(Ls, Shots),
     ShotsAdded  = lists:foldl(fun({X, Y}, AccMatrix) ->
                                   Repr = repr_for_shot({X, Y}, ShipListMod),
@@ -117,7 +105,7 @@ to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
     [lists:concat(Line) || Line <- ShotsAdded].
 
 to_visual_ships(#board{ship_list=Ls, size=Size, shots=Shots}) ->
-    Matrix      = new_matrix(Size, fun(_,_,_,_) -> "~" end),
+    Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "~" end),
     MatrixShips = lists:foldl(fun({X, Y}, AccMatrix) ->
                                   element_set(X + 1, Y + 1, "o", AccMatrix)
                               end, Matrix, lists:flatten(Ls)),
