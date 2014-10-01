@@ -45,4 +45,6 @@ call_rest_post(radar_json, host + '/battleship/radar/')
 # sara radar
 call_rest_post(radar_json2, host + '/battleship/radar/')
 # info
-call_rest_get(info_json,  host + '/battleship/info/')
+call_rest_get(info_json, host + '/battleship/info/')
+# radar all
+call_rest_get(info_json, host + '/battleship/radar_all/')
