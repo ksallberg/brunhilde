@@ -5,7 +5,6 @@ all:
 	erlc -o ebin/ src/route_handler.erl
 	erlc -o ebin/ src/http_parser.erl
 	erlc -o ebin/ src/battle_ship.erl
-	erlc -o ebin/ src/matrix.erl
 
 clean:
 	rm -rf ebin/*.beam
