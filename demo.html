@@ -2,7 +2,11 @@
     <head>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
         <script>
+
+            var content = '{"radar all":[{"player_name":"berra","board":["~~~~~~~~o~","~h~o~~~~~~","~om~~~oo~~","~o~mo~~~~~","~o~~h~o~~~","~~~~~m~~~~","~~o~~~m~~~","~~o~~~oho~","~~o~~~~~~~","~~~ooo~~~~"],"finished":"no"}]}';
+
             $(document).ready(function(){
+                /*
                 $.ajax({
                     type: 'GET',
                     error: function(e) {
@@ -19,7 +23,9 @@
                     done: function(a) {
                         alert("o");
                     }
-                });
+                });*/
+
+                $('#resultBox').html(content);
             })
         </script>
     </head>
