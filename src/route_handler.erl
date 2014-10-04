@@ -82,10 +82,11 @@ match(get, "/battleship/radar_all/", _) ->
                     battle_ship:add_shots(Shots, OriginalGameBoard),
                 Visual = battle_ship:to_visual_ships(PlayerGameBoard),
                     {[{<<"player_name">>, PlayerName},
-                      {<<"board">>, battle_ship:to_binary(Visual)},
-                      {<<"finished">>, battle_ship:finished(PlayerGameBoard)}]}
+                      {<<"board">>,    battle_ship:to_binary(Visual)},
+                      {<<"finished">>, battle_ship:finished(PlayerGameBoard)},
+                      {<<"shots">>,    length(Shots)}]}
             end, Players),
-    {[{<<"radar all">>, ModPlayers}]};
+    {[{<<"radar_all">>, ModPlayers}]};
 
 %% Clear the database and create a new round
 %% of battleship with no players
