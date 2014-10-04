@@ -73,20 +73,24 @@ match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}) ->
 
 %% See all players and their current game boards.
 match(get, "/battleship/radar_all/", _) ->
-    [{players, Players}] = ets:lookup(global_memory, players),
-    [{game_board, OriginalGameBoard}] = ets:lookup(global_memory, game_board),
-    ModPlayers =
-        lists:map(
-            fun(#player{shots=Shots, player_name=PlayerName}) ->
-                PlayerGameBoard =
-                    battle_ship:add_shots(Shots, OriginalGameBoard),
-                Visual = battle_ship:to_visual_ships(PlayerGameBoard),
-                    {[{<<"player_name">>, PlayerName},
-                      {<<"board">>,    battle_ship:to_binary(Visual)},
-                      {<<"finished">>, battle_ship:finished(PlayerGameBoard)},
-                      {<<"shots">>,    length(Shots)}]}
-            end, Players),
-    {[{<<"radar_all">>, ModPlayers}]};
+    case ets:lookup(global_memory, players) of
+        [] -> {[{<<"radar_all">>, <<"no players registered">>}]};
+        [{players, Players}] ->
+            [{game_board, OriginalGameBoard}] = ets:lookup(global_memory,
+                                                           game_board),
+            ModPlayers =
+                  lists:map(
+                      fun(#player{shots=Shots, player_name=PlayerName}) ->
+                          PGameBoard =
+                              battle_ship:add_shots(Shots, OriginalGameBoard),
+                          Visual = battle_ship:to_visual_ships(PGameBoard),
+                          {[{<<"player_name">>, PlayerName},
+                            {<<"board">>,    battle_ship:to_binary(Visual)},
+                            {<<"finished">>, battle_ship:finished(PGameBoard)},
+                            {<<"shots">>,    length(Shots)}]}
+                      end, Players),
+            {[{<<"radar_all">>, ModPlayers}]}
+   end;
 
 %% Clear the database and create a new round
 %% of battleship with no players

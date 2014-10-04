@@ -70,10 +70,15 @@
                     success: function(content) {
                         var obj = JSON.parse(content);
                         var str = "";
-                        for(var i = 0; i < obj.radar_all.length; i ++) {
-                            str += format_player(obj.radar_all[i]);
+
+                        if(obj.radar_all == "no players registered") {
+                            str = "No players currently registered";
+                        } else {
+                            for(var i = 0; i < obj.radar_all.length; i ++) {
+                                str += format_player(obj.radar_all[i]);
+                            }
+                            str += "<div class='clear'></div>";
                         }
-                        str += "<div class='clear'></div>";
                         $('#resultBox').html(str);
                         setTimeout(call_server, 500);
                     },
