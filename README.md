@@ -20,7 +20,11 @@ Eshell V6.0  (abort with ^G)<br/>
 ok
 </strong>
 <h3>Info:</h3>
-rest_server_app.erl :: OTP application<br/>
-route_handler       :: Normal erl file<br/>
-tcp_listener        :: OTP gen_server<br/>
-tcp_reply_fsm       :: OTP gen_fsm<br/>
+rest_server_app :: OTP application<br/>
+route_handler   :: Normal erl file<br/>
+battle_ship     :: Normal erl file<br/>
+tcp_listener    :: OTP gen_server<br/>
+tcp_reply_fsm   :: OTP gen_fsm<br/>
+<br/>
+OTP design (and a lot of the code) taken from:<br/>
+http://erlangcentral.org/wiki/index.php?title=Building_a_Non-blocking_TCP_server_using_OTP_principles
