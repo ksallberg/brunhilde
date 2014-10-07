@@ -16,7 +16,7 @@ start_client() ->
 start(_Type, _Args) ->
     ets:new(global_memory, [public, set, named_table]),
     Listen = get_app_env(listen_port, ?DEF_PORT),
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply_fsm]).
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply]).
 
 stop(_S) ->
     ets:delete(global_memory),

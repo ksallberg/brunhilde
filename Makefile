@@ -1,5 +1,5 @@
 all:
-	erlc -o ebin/ src/tcp_reply_fsm.erl
+	erlc -o ebin/ src/tcp_reply.erl
 	erlc -o ebin/ src/tcp_listener.erl
 	erlc -o ebin/ src/rest_server_app.erl
 	erlc -o ebin/ src/route_handler.erl
