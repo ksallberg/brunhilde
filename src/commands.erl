@@ -7,6 +7,7 @@ start() ->
 stop() ->
     {ok, Host} = inet:gethostname(),
     {rest_admin, list_to_atom("rest_server@" ++ Host)} ! stop,
+    timer:sleep(300), % on raspberrypi, needs time to send
     halt().
 
 admin_loop() ->
