@@ -10,7 +10,7 @@ stop() ->
     halt().
 
 admin_loop() ->
-    io:format("REST server starting ---- ~n"),
+    io:format("~nREST server starting ---- ~n"),
     register(rest_admin, self()),
     application:start(rest_server),
     io:format("REST server running ---- ~n"),
