@@ -1,2 +1,2 @@
 #!/bin/bash
-erl -pa ebin -eval "application:start(rest_server)"
+erl -noshell -sname rest_server -setcookie adm -pa ebin -eval "commands:start()" &

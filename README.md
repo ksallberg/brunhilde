@@ -14,11 +14,9 @@ make all
 . start.sh
 <br/>
 <h5>To stop:</h5>
-<strong>
-Eshell V6.0  (abort with ^G)<br/>
-1> application:stop(rest_server).<br/>
-ok
-</strong>
+<br/>
+. stop.sh
+<br/>
 <h3>Info:</h3>
 rest_server_app :: OTP application<br/>
 route_handler   :: Normal erl file<br/>
