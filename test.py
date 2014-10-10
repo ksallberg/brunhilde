@@ -28,10 +28,7 @@ shoot_json2 = {'player_name': 'sara', 'shoot_at': [4,5]}
 radar_json  = {'player_name': 'berra'}
 radar_json2 = {'player_name': 'sara'}
 info_json   = {}
-reset_json  = {'password': 'pretty please'}
 
-# Reset the entire game... all players will be deleted
-call_rest_post(reset_json, host + '/battleship/reset/')
 # register ourselves as a player
 call_rest_post(reg_json,   host + '/battleship/register/')
 # register another player
