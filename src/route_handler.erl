@@ -1,5 +1,5 @@
 -module(route_handler).
--export([match/3]).
+-export([match/3, init/0]).
 -import(battle_ship, [new_board/0]).
 
 %% tip: there is an application wide ets table
@@ -13,6 +13,13 @@
         { player_name :: string(),
           shots       :: [integer()]
         }).
+
+%% Called upon the start of the server
+init() ->
+    ets:delete_all_objects(global_memory),
+    NewBoard  = battle_ship:new_board(),
+    ets:insert(global_memory, {game_board, NewBoard}),
+    ok.
 
 %% Get the player name from Json,
 %% Register the player, OR error

@@ -15,6 +15,7 @@ start_client() ->
 
 start(_Type, _Args) ->
     ets:new(global_memory, [public, set, named_table]),
+    route_handler:init(), %% let the user defined module do initialization
     Listen = get_app_env(listen_port, ?DEF_PORT),
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply]).
 
