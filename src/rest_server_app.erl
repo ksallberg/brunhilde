@@ -8,7 +8,7 @@
 
 -define(MAX_RESTART,    5).
 -define(MAX_TIME,      60).
--define(DEF_PORT,    2222).
+-define(DEF_PORT,   28251).
 
 start_client() ->
     supervisor:start_child(tcp_client_sup, []).

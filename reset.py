@@ -11,7 +11,7 @@ def call_rest(obj, addr):
     print r.text
     print "\n"
 
-host       = 'http://localhost:2222'
+host       = 'http://localhost:28251'
 
 reset_json  = {'password': 'pretty please'}
 

@@ -19,7 +19,7 @@ def call_rest_get(obj, addr):
     print r.text
     print "\n"
 
-host       = 'http://localhost:2222'
+host       = 'http://localhost:28251'
 
 reg_json    = {'player_name': 'berra'}
 reg_json2   = {'player_name': 'sara'}
