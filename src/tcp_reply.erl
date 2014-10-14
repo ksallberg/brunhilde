@@ -14,7 +14,7 @@
                  data,        %% collected data
                  body_length, %% total body length
                  route,       %% route expressed as string()
-                 params,      %% GET parameters, if any...
+                 parameters,  %% GET parameters, if any...
                  method       %% method expressed as atom(), get, post...
                }).
 
@@ -31,16 +31,18 @@ init([]) ->
     {ok, #state{}}.
 
 %% No request JSON given...
-respond(#state{socket = S, data = [],   route = Route, method = Method}) ->
-    Answer     = route_handler:match(Method, Route, no_json),
+respond(#state{socket = S, data = [], route = Route,
+               method = Method, parameters = Parameters}) ->
+    Answer     = route_handler:match(Method, Route, no_json, Parameters),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S);
 
 %% Request JSON given...
-respond(#state{socket = S, data = Body, route = Route, method = Method}) ->
+respond(#state{socket = S, data = Body, route = Route,
+               method = Method, parameters = Parameters}) ->
     JsonObj    = jiffy:decode(Body),
-    Answer     = route_handler:match(Method, Route, JsonObj),
+    Answer     = route_handler:match(Method, Route, JsonObj, Parameters),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S).
@@ -62,7 +64,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
                     State#state{data        = DBuf ++ Body,
                                 body_length = NewBL,
                                 route       = NewRoute,
-                                params      = Params,
+                                parameters  = Params,
                                 method      = Method};
                 _ ->
                     State#state{data=DBuf ++ Data}
