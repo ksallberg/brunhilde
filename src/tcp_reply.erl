@@ -14,6 +14,7 @@
                  data,        %% collected data
                  body_length, %% total body length
                  route,       %% route expressed as string()
+                 params,      %% GET parameters, if any...
                  method       %% method expressed as atom(), get, post...
                }).
 
@@ -54,13 +55,14 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
         false ->
             NewState = case BL of
                 unknown ->
-                    {{Method, Route, v11}, Headers, Body}
+                    {{Method, Route, Params, v11}, Headers, Body}
                         = http_parser:parse_request(Data),
                     NewBL     = get_content_length(Headers),
                     NewRoute  = Route,
                     State#state{data        = DBuf ++ Body,
                                 body_length = NewBL,
                                 route       = NewRoute,
+                                params      = Params,
                                 method      = Method};
                 _ ->
                     State#state{data=DBuf ++ Data}

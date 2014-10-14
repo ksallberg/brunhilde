@@ -24,12 +24,17 @@ request_line([$D, $E, $L, $E, $T, $E, 32 | R0]) ->
 throw_params(URI) ->
     lists:takewhile(fun(X) -> X /= $? end, URI).
 
-% FIXME, for now just throwing away GET parameters
+keep_params(URI) ->
+    case lists:dropwhile(fun(X) -> X /= $? end, URI) of
+        [] -> []; %no GET parameters encountered
+        Ls -> parameters(lists:nthtail(1, Ls)) % first, remove the ? char
+    end.
+
 line_continue(Method, R0) ->
     {URI, R1}     = request_uri(R0),
     {Ver, R2}     = http_version(R1),
     [13, 10 | R3] = R2,
-    {{Method, throw_params(URI), Ver}, R3}.
+    {{Method, throw_params(URI), keep_params(URI), Ver}, R3}.
 
 % 32 is the last byte of the request uri (space), R0 is the last rest
 request_uri([32|R0]) ->
@@ -65,6 +70,20 @@ header([C|R0]) ->
 
 message_body(R) ->
     {R, []}.
+
+parameters(Ls) ->
+    {Parameter, Rest} = parameter(Ls),
+    case Rest of
+        [] -> [Parameter];
+        _  -> [Parameter] ++ parameters(lists:nthtail(1,Rest))
+    end.
+
+parameter(Ls) ->
+    {Name, Rest}     = lists:splitwith(fun(X) -> X /= $= end, Ls),
+    {Content, Rest2} = lists:splitwith(fun(X) -> X /= $& end,
+                                       lists:nthtail(1,Rest)
+                                      ), % drop = char
+    {{Name, Content}, Rest2}.
 
 %% for now always send access-control-allow
 response(Body) ->
