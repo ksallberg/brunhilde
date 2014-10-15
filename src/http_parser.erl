@@ -2,6 +2,7 @@
 -export([parse_request/1, response/1]).
 
 -type http_info() :: {atom(), string(), [{atom(), atom()}], atom()}.
+-type param() :: {atom(), arom()}.
 
 % Parse a request and return the
 % request, headers and body as a tuple
@@ -27,7 +28,7 @@ request_line([$D, $E, $L, $E, $T, $E, 32 | R0]) ->
 throw_params(URI) ->
     lists:takewhile(fun(X) -> X /= $? end, URI).
 
--spec keep_params(string()) -> [{atom(), atom()}].
+-spec keep_params(string()) -> [param()].
 keep_params(URI) ->
     case lists:dropwhile(fun(X) -> X /= $? end, URI) of
         [] -> []; %no GET parameters encountered
@@ -77,7 +78,7 @@ header([C|R0]) ->
     {Rest, R1} = header(R0),
     {[C|Rest], R1}.
 
--spec parameters(string()) -> [{atom(), atom()}].
+-spec parameters(string()) -> [param()].
 parameters(Ls) ->
     {Parameter, Rest} = parameter(Ls),
     case Rest of
@@ -85,7 +86,7 @@ parameters(Ls) ->
         _  -> [Parameter] ++ parameters(lists:nthtail(1,Rest))
     end.
 
--spec parameter(string()) -> {{atom(), atom()}, string()}.
+-spec parameter(string()) -> {param(), string()}.
 parameter(Ls) ->
     {Name, Rest}     = lists:splitwith(fun(X) -> X /= $= end, Ls),
     {Content, Rest2} = lists:splitwith(fun(X) -> X /= $& end,
