@@ -7,7 +7,7 @@ Communicating in json.
 <h3>Requires:</h3>
 jiffy (obtain through rebar)
 <h3>Usage:</h3>
-./rebar get-deps
+./rebar get-deps<br/>
 ./rebar compile
 <br/>
 . start.sh
