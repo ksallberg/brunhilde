@@ -2,7 +2,7 @@
 -export([parse_request/1, response/1]).
 
 -type http_info() :: {atom(), string(), [{atom(), atom()}], atom()}.
--type param() :: {atom(), arom()}.
+-type param() :: {atom(), atom()}.
 
 % Parse a request and return the
 % request, headers and body as a tuple

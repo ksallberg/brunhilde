@@ -5,9 +5,10 @@ Erlang/OTP rest server listening for user specified routes.
 <br/>
 Communicating in json.
 <h3>Requires:</h3>
-erlang-jiffy
+jiffy (obtain through rebar)
 <h3>Usage:</h3>
-make all
+./rebar get-deps
+./rebar compile
 <br/>
 . start.sh
 <h5>To stop:</h5>
