@@ -10,9 +10,9 @@ sudo apt-get install rebar (or equivalent)
 <h3>Uses:</h3>
 erlang-jiffy (automatic git clone through rebar)
 <h3>Usage:</h3>
-./rebar get-deps
+rebar get-deps
 <br/>
-./rebar compile
+rebar compile
 <br/>
 . start.sh
 <h5>To stop:</h5>
