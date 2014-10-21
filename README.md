@@ -5,9 +5,13 @@ Erlang/OTP rest server listening for user specified routes.
 <br/>
 Communicating in json.
 <h3>Requires:</h3>
-jiffy (obtain through rebar)
+rebar:<br>
+sudo apt-get install rebar (or equivalent)
+<h3>Uses:</h3>
+erlang-jiffy (automatic git clone through rebar)
 <h3>Usage:</h3>
-./rebar get-deps<br/>
+./rebar get-deps
+<br/>
 ./rebar compile
 <br/>
 . start.sh
