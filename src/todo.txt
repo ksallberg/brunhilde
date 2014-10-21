@@ -1,2 +1,0 @@
-learn rebar and use for the jiffy dependency
-learn dializer and implement types and specs everywhere
