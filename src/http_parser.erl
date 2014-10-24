@@ -1,14 +1,14 @@
 -module(http_parser).
 -export([parse_request/1, response/1]).
 
--type http_info() :: {atom(), string(), [{atom(), atom()}], atom()}.
--type param() :: {atom(), atom()}.
+-type method() :: 'delete' | 'get' | 'post' | 'put'.
+-type http_version() :: 'v10' | 'v11'.
+-type http_info() :: {method(), string(), [{atom(), atom()}], atom()}.
+-type param() :: {string(), string()}.
 
 % Parse a request and return the
 % request, headers and body as a tuple
--spec parse_request(string()) -> {http_info(),
-                                  {[string()], string()},
-                                  string()}.
+-spec parse_request(string()) -> {http_info(), [string()], string()}.
 parse_request(R0) ->
     {HttpInfo, R1}  = request_line(R0),
     {Headers, Body} = headers(R1),
@@ -43,7 +43,7 @@ line_continue(Method, R0) ->
     {{Method, throw_params(URI), keep_params(URI), Ver}, R3}.
 
 % 32 is the last byte of the request uri (space), R0 is the last rest
--spec request_uri(string()) -> {[string()], string()}.
+-spec request_uri(string()) -> {string(), string()}.
 request_uri([32|R0]) ->
     {[], R0};
 % intil 32 is found, keep adding the head element
