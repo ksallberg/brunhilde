@@ -3,18 +3,25 @@
          add_shot/2, to_binary/1, to_visual/1, finished/1]).
 
 %% {x,y}
--record(board, { ship_list :: [[{integer(), integer()}]]
+-record(board, { ship_list :: [ship()]
                , size      :: integer()
-               , shots     :: [{integer(), integer()}]
+               , shots     :: [coordinate()]
                }).
 
+%% @see http://stackoverflow.com/questions/15840842/erlang-records-with-
+%%      both-type-and-value-restrictions-as-well-as-default-values
+-type coordinate() :: {integer(), integer()}.
+-type ship()       :: [coordinate()].
+-type board()      :: #board{}.
+-type matrix()     :: [[any()]].
 %% _______ MATRIX FUNCTIONS ________
 %% author: https://github.com/majelbstoat/Morgana/blob/master/src/matrix.erl
-
+-spec new_matrix(integer(), integer(), any()) -> matrix().
 new_matrix(Columns, Rows, ContentGenerator) ->
     [[ContentGenerator(Column, Row, Columns, Rows) ||
       Column <- lists:seq(1, Columns)] || Row <- lists:seq(1, Rows)].
 
+-spec element_set(integer(), integer(), any(), matrix()) -> matrix().
 element_set(ElementColumn, ElementRow, Value, Matrix) ->
     {Width, Height} = {length(lists:nth(1, Matrix)), length(Matrix)},
     new_matrix(Width, Height, fun(Column, Row, _, _) ->
@@ -25,9 +32,9 @@ element_set(ElementColumn, ElementRow, Value, Matrix) ->
                     lists:nth(Column, lists:nth(Row, Matrix))
             end
         end).
-
 %% _______ END OF MATRIX FUNCTIONS _______
 
+-spec new_board() -> board().
 new_board() -> hard_coded_board().
 
 % ~~~~~~~o~~
@@ -40,6 +47,7 @@ new_board() -> hard_coded_board().
 % ~~o~~~ooo~
 % ~~o~~~~~~~
 % ~~~ooo~~~~
+-spec hard_coded_board() -> board().
 hard_coded_board() ->
     #board{ship_list = [[{1,1}, {1,2}, {1,3}, {1,4}],
                         [{8,0}],
@@ -54,15 +62,18 @@ hard_coded_board() ->
            shots = []}.
 
 %% Test: battle_ship:add_shots([[0,0], [0,1], [0,2], [9,9]], Board).
+-spec add_shots([[integer()]], board()) -> board().
 add_shots(Shots, Board) ->
     lists:foldl(fun(Shot, AccBoard) ->
                     add_shot(Shot, AccBoard)
                 end, Board, Shots).
 
+-spec add_shot([integer()], board()) -> board().
 add_shot([XCord, YCord], #board{shots=Shots}=Board) ->
     Board#board{shots=Shots++[{XCord, YCord}]}.
 
 %% If all ship coords are part of the shot list, then all ships are sunk.
+-spec finished(board()) -> binary().
 finished(#board{ship_list=Ships, shots=Shots}) ->
     All = lists:all(fun(ShipCoord) ->
                         lists:member(ShipCoord, Shots)
@@ -72,12 +83,14 @@ finished(#board{ship_list=Ships, shots=Shots}) ->
         false -> <<"no">>
     end.
 
+-spec ship_is_sunk(ship(), [coordinate()]) -> {sunk | seaworthy, ship()}.
 ship_is_sunk(Ship, Shots) ->
     case lists:all(fun(Coord) -> lists:member(Coord, Shots) end, Ship) of
         true  -> {sunk, Ship};
         false -> {seaworthy, Ship}
     end.
 
+-spec repr_for_shot(coordinate(), [{atom(), ship()}]) -> string().
 repr_for_shot({_X,_Y}=Shot, ShipListMod) ->
     CoordLs = [[{Coord, ShipStatus} || Coord <- Ship]
                                     || {ShipStatus, Ship} <- ShipListMod],
@@ -91,9 +104,11 @@ repr_for_shot({_X,_Y}=Shot, ShipListMod) ->
     end.
 
 % get a ship list, and some shots, return [{alive, [{x,y}]}]
+-spec check_sunk_ships([ship()], [coordinate()]) -> [{atom(), ship()}].
 check_sunk_ships(ShipList, Shots) ->
     [ship_is_sunk(Ship, Shots) || Ship <- ShipList].
 
+-spec to_visual(board()) -> [string()].
 to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
     Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "~" end),
     ShipListMod = check_sunk_ships(Ls, Shots),
@@ -104,6 +119,7 @@ to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
                               ShotsAdded,
     [lists:concat(Line) || Line <- ShotsAdded].
 
+-spec to_visual_ships(board()) -> [string()].
 to_visual_ships(#board{ship_list=Ls, size=Size, shots=Shots}) ->
     Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "~" end),
     MatrixShips = lists:foldl(fun({X, Y}, AccMatrix) ->
@@ -117,5 +133,5 @@ to_visual_ships(#board{ship_list=Ls, size=Size, shots=Shots}) ->
                               ShotsAdded,
     [lists:concat(Line) || Line <- ShotsAdded].
 
-to_binary(Board) ->
-    [list_to_binary(Line) || Line <- Board].
+-spec to_binary([string()]) -> [binary()].
+to_binary(Board) -> [list_to_binary(Line) || Line <- Board].
