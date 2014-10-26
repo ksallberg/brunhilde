@@ -3,27 +3,35 @@
 
 -behaviour(application).
 
--export([start_client/0]).
--export([start/2, stop/1, init/1]).
+-export([start_client/0, start/2, stop/1, init/1]).
+
+-type child() :: any().
 
 -define(MAX_RESTART,    5).
 -define(MAX_TIME,      60).
 -define(DEF_PORT,   28251).
 
+-spec start_client() -> {ok, child()} | {ok, child(), term()} | {error, any()}.
 start_client() ->
     supervisor:start_child(tcp_client_sup, []).
 
+-spec start(any(), term()) -> {ok, pid()}
+                            | {ok, pid(), term()}
+                            | {error, any()}.
 start(_Type, _Args) ->
     ets:new(global_memory, [public, set, named_table]),
     route_handler:init(), %% let the user defined module do initialization
     Listen = get_app_env(listen_port, ?DEF_PORT),
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply]).
 
+-spec stop(any()) -> ok.
 stop(_S) ->
     ets:delete(global_memory),
     ok.
 
-% Supervisor behaviour callbacks
+%% Supervisor behaviour callbacks
+%% FIXME: Very weak type specification... Almost worse than nothing at all...
+-spec init([any()]) -> tuple().
 init([Port, Module]) ->
     {ok,
         {_SupFlags = {one_for_one, ?MAX_RESTART, ?MAX_TIME},
@@ -65,6 +73,7 @@ init([Module]) ->
         }
     }.
 
+-spec get_app_env(atom(), integer()) -> {ok, [[string()]]} | error.
 get_app_env(Opt, Default) ->
     case application:get_env(application:get_application(), Opt) of
         {ok, Val} -> Val;
