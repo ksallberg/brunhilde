@@ -7,15 +7,21 @@
 -export([init/1, handle_call/3, handle_cast/2,
          handle_info/2, terminate/2, code_change/3]).
 
+%% FIXME: Change acceptor to port, and find out what
+%%        prim_inet:async_accept returns
 -record(state,
-        {listener,   %% listening to socket
-         acceptor,   %% async acceptor's internal reference
-         module      %% FSM handling module
+        {listener :: port(),   %% listening to socket
+         acceptor :: any(), %% async acceptor's internal reference
+         module   :: atom()    %% communication handling module
         }).
 
+-type state()  :: #state{}.
+
+-spec start_link(integer(), atom()) -> {ok, pid()} | ignore | {error, any()}.
 start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, Module], []).
 
+-spec init([integer() | atom()]) -> {ok, state()} | {stop, any()}.
 init([Port, Module]) ->
     process_flag(trap_exit, true),
     Opts = [list, {packet, 0}, {reuseaddr, true}, {keepalive, true},
@@ -30,12 +36,18 @@ init([Port, Module]) ->
             {stop, Reason}
     end.
 
+% here Request can be anything, we don't know...
+-spec handle_call(any(), {pid(), any()}, state()) ->
+    {stop, {atom(), any()}, state()}.
 handle_call(Request, _From, State) ->
     {stop, {unknown_call, Request}, State}.
 
+-spec handle_cast(any(), state()) -> {noreply, state()}.
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+-spec handle_info(any(), state()) -> {noreply, state()} |
+                                     {stop, any(), state()}.
 handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
             #state{listener=ListSock, acceptor=Ref, module=Module} = State) ->
     try
@@ -66,22 +78,20 @@ handle_info({inet_async, _ListSock, _Ref, Error}, State) ->
 handle_info(_Info, State) ->
     {no_reply, State}.
 
+-spec terminate(any(), state()) -> ok.
 terminate(_Reason, State) ->
     gen_tcp:close(State#state.listener),
     ok.
 
+-spec code_change(any(), state(), any()) -> {ok, state()}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+-spec set_sockopt(port(), port()) -> ok | any().
 set_sockopt(ListSock, CliSock) ->
     true = inet_db:register_socket(CliSock, inet_tcp),
-    case prim_inet:getopts(ListSock,
-                           [active,
-                            nodelay,
-                            keepalive,
-                            delay_send,
-                            priority,
-                            tos]) of
+    SockSettings = [active, nodelay, keepalive, delay_send, priority, tos],
+    case prim_inet:getopts(ListSock, SockSettings) of
         {ok, Opts} ->
             case prim_inet:setopts(CliSock, Opts) of
                 ok    -> ok;

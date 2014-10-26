@@ -17,6 +17,8 @@ rebar compile
 . start.sh
 <h5>To stop:</h5>
 1> application:stop(rest_server).
+<h3>Dialyzer:</h3>
+dialyzer --src src/
 <h3>Info:</h3>
 rest_server_app :: OTP application<br/>
 route_handler   :: Normal erl file<br/>

@@ -81,8 +81,7 @@ match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}, _Ps) ->
     end;
 
 %% See all players and their current game boards.
-match(get, "/battleship/radar_all/", _, Parameters) ->
-    io:format("Battleship radar all, parameters! ~p~n", [Parameters]),
+match(get, "/battleship/radar_all/", _, _Parameters) ->
     case ets:lookup(global_memory, players) of
         [] -> {[{<<"radar_all">>, <<"no players registered">>}]};
         [{players, Players}] ->
