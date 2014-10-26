@@ -22,7 +22,7 @@ init() ->
     ets:insert(global_memory, {game_board, NewBoard}),
     ok.
 
--spec match(atom(), string(), tuple(), [{atom(), atom()}]) -> tuple().
+-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,
 %% Register the player, OR error
 match(post, "/battleship/register/", {[Json]}, _Parameters) ->

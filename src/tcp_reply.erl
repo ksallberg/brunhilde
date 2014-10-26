@@ -114,11 +114,10 @@ code_change(_OldVsn, StateData, _Extra) ->
     {ok, StateData}.
 
 get_content_length(Headers) ->
-    ConLen = [Len || [Desc,Len] <- [string:tokens(H," ")
-                  || H<-Headers],Desc=="Content-Length:"],
-    case ConLen of
-        [] -> 0;
-        _  -> A = lists:nth(1, ConLen),
-              {Num, _} = string:to_integer(A),
-              Num
+    case [Len || [Desc,Len] <- [string:tokens(H," ")
+              || H<-Headers],Desc=="Content-Length:"] of
+        []     -> 0;
+        ConLen -> A = lists:nth(1, ConLen),
+                      {Num, _} = string:to_integer(A),
+                      Num
     end.

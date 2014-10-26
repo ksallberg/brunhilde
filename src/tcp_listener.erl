@@ -60,9 +60,7 @@ handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
         {stop, Why, State}
     end;
 
-handle_info({inet_async, ListSock, Ref, Error},
-            #state{listener=ListSock, acceptor=Ref} = State) ->
-    error_logger:error_msg(),
+handle_info({inet_async, _ListSock, _Ref, Error}, State) ->
     {stop, Error, State};
 
 handle_info(_Info, State) ->
