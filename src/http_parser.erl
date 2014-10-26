@@ -3,7 +3,7 @@
 
 -type method() :: 'delete' | 'get' | 'post' | 'put'.
 -type http_version() :: 'v10' | 'v11'.
--type http_info() :: {method(), string(), [{atom(), atom()}], atom()}.
+-type http_info() :: {method(), string(), [{atom(), atom()}], http_version()}.
 -type param() :: {string(), string()}.
 
 % Parse a request and return the
