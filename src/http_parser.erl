@@ -61,6 +61,7 @@ http_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
 % recursively pick out all headers until
 % the stop "[13,10]" CRLF
 -spec headers(string()) -> {[string()], string()}.
+
 headers([13, 10 | R0]) ->
     {[],R0};
 headers(R0) ->

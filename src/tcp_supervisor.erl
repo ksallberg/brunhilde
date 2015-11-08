@@ -8,13 +8,15 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    io:format("sup!~n"),
     Port = 28251,
-    %{ok, Port} = application:get_env(port),
     %% Set the socket into {active_once} mode.
     %% See sockserv_serv comments for more details
     {ok, ListenSocket} = gen_tcp:listen(Port,
-                                        [{active,once}, {packet,line}]
+                                        [list,
+                                         {packet, 0},
+                                         {reuseaddr, true},
+                                         {keepalive, true},
+                                         {backlog, 30}]
                                        ),
     spawn_link(fun empty_listeners/0),
     {ok, {{simple_one_for_one, 10, 60},
