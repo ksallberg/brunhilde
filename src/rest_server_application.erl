@@ -1,4 +1,4 @@
--module(rest_server_app).
+-module(rest_server_application).
 
 -author('kristian@purestyle.se').
 
@@ -15,8 +15,8 @@ start(_Type, _Args) ->
     ets:new(erlrest_global_memory, [public, set, named_table]),
     %% let the user defined module do initialization
     route_handler:init(),
-    Listen = ?DEF_PORT,
-    %% supervisor:start_link
+    supervisor:start_link(tcp_supervisor, []). %,
+    %tcp_supervisor:empty_listeners().
 
 -spec stop(any()) -> ok.
 stop(_State) ->

@@ -3,21 +3,20 @@
  [{description,  "Rest server"},
   {vsn,          "1.0"},
   {id,           "rest_server"},
-  {modules,      [tcp_listener,
-                  tcp_reply,
-                  battle_ship,
+  {modules,      [battle_ship,
                   http_parser,
-                  rest_server_app,
-                  rest_server_supervisor,
-                  route_handler
-                  ]
+                  rest_server_application,
+                  route_handler,
+                  tcp_server,
+                  tcp_supervisor
+                 ]
   },
-  {registered,   [rest_server_sup, tcp_listener]},
+  {registered,   []},
   {applications, [kernel, stdlib]},
   %%
   %% mod: Specify the module name to start the application, plus args
   %%
-  {mod, {rest_server_app, []}},
+  {mod, {rest_server_application, []}},
   {env, []}
  ]
 }.
