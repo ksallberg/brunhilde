@@ -9,6 +9,7 @@
                   commands,
                   http_parser,
                   rest_server_app,
+                  rest_server_supervisor,
                   route_handler
                   ]
   },

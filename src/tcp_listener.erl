@@ -16,6 +16,11 @@
         }).
 
 -type state()  :: #state{}.
+-type child() :: any().
+
+-spec start_client() -> {ok, child()} | {ok, child(), term()} | {error, any()}.
+start_client() ->
+    supervisor:start_child(tcp_client_sup, []).
 
 -spec start_link(integer(), atom()) -> {ok, pid()} | ignore | {error, any()}.
 start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
@@ -24,8 +29,12 @@ start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
 -spec init([integer() | atom()]) -> {ok, state()} | {stop, any()}.
 init([Port, Module]) ->
     process_flag(trap_exit, true),
-    Opts = [list, {packet, 0}, {reuseaddr, true}, {keepalive, true},
-            {backlog, 30}, {active, false}],
+    Opts = [list,
+            {packet, 0},
+            {reuseaddr, true},
+            {keepalive, true},
+            {backlog, 30},
+            {active, false}],
     case gen_tcp:listen(Port, Opts) of
         {ok, Listen} ->
             {ok, Ref} = prim_inet:async_accept(Listen, -1),
@@ -56,7 +65,7 @@ handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
             {error, Reason} -> exit({set_sockopt, Reason})
         end,
 
-        {ok, Pid} = rest_server_app:start_client(),
+        {ok, Pid} = start_client(),
         gen_tcp:controlling_process(CliSock, Pid),
         Module:set_socket(Pid, CliSock),
 
@@ -90,7 +99,12 @@ code_change(_OldVsn, State, _Extra) ->
 -spec set_sockopt(port(), port()) -> ok | any().
 set_sockopt(ListSock, CliSock) ->
     true = inet_db:register_socket(CliSock, inet_tcp),
-    SockSettings = [active, nodelay, keepalive, delay_send, priority, tos],
+    SockSettings = [active,
+                    nodelay,
+                    keepalive,
+                    delay_send,
+                    priority,
+                    tos],
     case prim_inet:getopts(ListSock, SockSettings) of
         {ok, Opts} ->
             case prim_inet:setopts(CliSock, Opts) of

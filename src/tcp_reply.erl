@@ -3,19 +3,27 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, set_socket/2, init/1, handle_cast/2, handle_call/3,
-         terminate/2, handle_info/2, code_change/3]).
+-export([start_link/0,
+         set_socket/2,
+         init/1,
+         handle_cast/2,
+         handle_call/3,
+         terminate/2,
+         handle_info/2,
+         code_change/3]).
 
 -import(jiffy, [decode/1]).
 
 % State while receiving bytes from the tcp socket
--record(state, { socket      :: port() %% client socket
-               , addr        :: port() %% client address
-               , data        :: string() %% collected data
-               , body_length :: integer() %% total body length
-               , route       :: string() %% route expressed as string()
+-record(state, { socket      :: port()                 %% client socket
+               , addr        :: port()                 %% client address
+               , data        :: string()               %% collected data
+               , body_length :: integer()              %% total body length
+               , route       :: string()               %% route expressed
+                                                       %% as string()
                , parameters  :: [{string(), string()}] %% GET parameters
-               , method      :: atom() %% method expressed as atom(), get, post
+               , method      :: atom()                 %% method expressed as
+                                                       %% atom(), get, post
                }).
 
 -type state() :: #state{}.

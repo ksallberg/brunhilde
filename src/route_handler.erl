@@ -3,7 +3,7 @@
 -import(battle_ship, [new_board/0]).
 
 %% tip: there is an application wide ets table
-%% called global_memory that might come in handy here
+%% called erlrest_global_memory that might come in handy here
 
 %% Global memory schema:
 %%     {players, [player]}
@@ -17,9 +17,9 @@
 %% Called upon the start of the server
 -spec init() -> atom().
 init() ->
-    ets:delete_all_objects(global_memory),
+    ets:delete_all_objects(erlrest_global_memory),
     NewBoard  = battle_ship:new_board(),
-    ets:insert(global_memory, {game_board, NewBoard}),
+    ets:insert(erlrest_global_memory, {game_board, NewBoard}),
     ok.
 
 -spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
@@ -28,14 +28,14 @@ init() ->
 match(post, "/battleship/register/", {[Json]}, _Parameters) ->
     %% look at the Json, do something, and reply with a new json
     {<<"player_name">>, PlayerName} = Json,
-    Players   = ets:lookup(global_memory, players),
+    Players   = ets:lookup(erlrest_global_memory, players),
     NewPlayer = #player{player_name = PlayerName, shots = []},
     case Players of
-        [] -> ets:insert(global_memory, {players, [NewPlayer]}),
+        [] -> ets:insert(erlrest_global_memory, {players, [NewPlayer]}),
               {[{<<"status">>, <<"welcome">>}]};
         _  -> [{players, Ls}] = Players,
               case lists:keysearch(PlayerName, #player.player_name, Ls) of
-                 false -> ets:insert(global_memory,
+                 false -> ets:insert(erlrest_global_memory,
                                      {players, Ls ++ [NewPlayer]}),
                           {[{<<"status">>, <<"welcome">>}]};
                  _ -> {[{<<"status">>, <<"error, already registered">>}]}
@@ -50,7 +50,7 @@ match(post, "/battleship/shoot/", Json, _Parameters) ->
     {Objs} = Json,
     {_, PlayerName}  = lists:keyfind(<<"player_name">>, 1, Objs),
     {_, Coordinates} = lists:keyfind(<<"shoot_at">>, 1, Objs),
-    [{players, Players}] = ets:lookup(global_memory, players),
+    [{players, Players}] = ets:lookup(erlrest_global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
@@ -59,20 +59,20 @@ match(post, "/battleship/shoot/", Json, _Parameters) ->
             Shots      = Player#player.shots ++ [Coordinates],
             NewPlayer  = Player#player{shots=Shots},
             NewPlayers = lists:keyreplace(PlayerName, 2, Players, NewPlayer),
-            ets:insert(global_memory, {players, NewPlayers}),
+            ets:insert(erlrest_global_memory, {players, NewPlayers}),
             {[{<<"status">>, <<"ok, shot added">>}]}
     end;
 
 %% returns the game board
 match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}, _Ps) ->
-    [{players, Players}] = ets:lookup(global_memory, players),
+    [{players, Players}] = ets:lookup(erlrest_global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
             {[{<<"status">>, <<"error, no such player">>}]};
         _ ->
             [{game_board, OriginalGameBoard}]
-                = ets:lookup(global_memory, game_board),
+                = ets:lookup(erlrest_global_memory, game_board),
             Shots = Player#player.shots,
             PlayerGameBoard = battle_ship:add_shots(Shots, OriginalGameBoard),
             Visual = battle_ship:to_visual(PlayerGameBoard),
@@ -82,11 +82,11 @@ match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}, _Ps) ->
 
 %% See all players and their current game boards.
 match(get, "/battleship/radar_all/", _, _Parameters) ->
-    case ets:lookup(global_memory, players) of
+    case ets:lookup(erlrest_global_memory, players) of
         [] -> {[{<<"radar_all">>, <<"no players registered">>}]};
         [{players, Players}] ->
-            [{game_board, OriginalGameBoard}] = ets:lookup(global_memory,
-                                                           game_board),
+            [{game_board, OriginalGameBoard}]
+                = ets:lookup(erlrest_global_memory, game_board),
             ModPlayers =
                   lists:map(
                       fun(#player{shots=Shots, player_name=PlayerName}) ->
@@ -107,9 +107,9 @@ match(post, "/battleship/reset/", {[Json]}, _Parameters) ->
     {<<"password">>, Pw} = Json,
     case Pw of
         <<"pretty please">> ->
-            ets:delete_all_objects(global_memory),
+            ets:delete_all_objects(erlrest_global_memory),
             NewBoard  = battle_ship:new_board(),
-            ets:insert(global_memory, {game_board, NewBoard}),
+            ets:insert(erlrest_global_memory, {game_board, NewBoard}),
             {[{<<"status">>, <<"ok, new round">>}]};
         _ ->
             {[{<<"status">>, <<"error, wrong password">>}]}

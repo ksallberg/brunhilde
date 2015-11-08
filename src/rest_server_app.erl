@@ -1,78 +1,33 @@
 -module(rest_server_app).
+
 -author('kristian@purestyle.se').
 
 -behaviour(application).
 
--export([start_client/0, start/2, stop/1, init/1]).
+-export([start/2, stop/1]).
 
--type child() :: any().
-
--define(MAX_RESTART,    5).
--define(MAX_TIME,      60).
--define(DEF_PORT,   28251).
-
--spec start_client() -> {ok, child()} | {ok, child(), term()} | {error, any()}.
-start_client() ->
-    supervisor:start_child(tcp_client_sup, []).
+-define(DEF_PORT, 28251).
 
 -spec start(any(), term()) -> {ok, pid()}
-                            | {ok, pid(), term()}
-                            | {error, any()}.
+                           | {ok, pid(), term()}
+                           | {error, any()}.
 start(_Type, _Args) ->
-    ets:new(global_memory, [public, set, named_table]),
-    route_handler:init(), %% let the user defined module do initialization
+    ets:new(erlrest_global_memory, [public, set, named_table]),
+    %% let the user defined module do initialization
+    route_handler:init(),
     Listen = get_app_env(listen_port, ?DEF_PORT),
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Listen, tcp_reply]).
+    supervisor:start_link({local, rest_server_supervisor},
+                          rest_server_supervisor,
+                          [Listen, tcp_reply]).
 
 -spec stop(any()) -> ok.
-stop(_S) ->
-    ets:delete(global_memory),
+stop(_State) ->
+    ets:delete(erlrest_global_memory),
     ok.
 
-%% Supervisor behaviour callbacks
-%% FIXME: Very weak type specification... Almost worse than nothing at all...
--spec init([any()]) -> tuple().
-init([Port, Module]) ->
-    {ok,
-        {_SupFlags = {one_for_one, ?MAX_RESTART, ?MAX_TIME},
-            [ % TCP Listener
-              { tcp_server_sup,                                    %% Id
-                {tcp_listener, start_link, [Port, Module]},        %% StartFun
-                permanent,                                         %% Restart
-                2000,                                              %% Shutdown
-                worker,                                            %% Type
-                [tcp_listener]                                     %% Modules
-              },
-              % Client instance supervisor
-              { tcp_client_sup,
-                {supervisor, start_link, [{local, tcp_client_sup},
-                                          ?MODULE,
-                                          [Module]
-                                         ]},
-                permanent,
-                infinity,
-                supervisor,
-                []
-              }
-            ]
-        }
-    };
-% Supervisor behaviour callbacks
-init([Module]) ->
-    {ok,
-        {_SupFlags = {simple_one_for_one, ?MAX_RESTART, ?MAX_TIME},
-            [ % TCP Client
-              { undefined,                                         %% Id
-                {Module, start_link, []},                          %% StartFun
-                temporary,                                         %% Restart
-                2000,                                              %% Shutdown
-                worker,                                            %% Type
-                []                                                 %% Modules
-              }
-            ]
-        }
-    }.
-
+%% Use a standard port number (Default), or consult
+%% the ebin/rest_server.app env list, if a listen_port
+%% is defined there.
 -spec get_app_env(atom(), integer()) -> {ok, [[string()]]} | error.
 get_app_env(Opt, Default) ->
     case application:get_env(application:get_application(), Opt) of
