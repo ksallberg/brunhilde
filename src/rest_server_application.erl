@@ -9,10 +9,9 @@
 -define(DEF_PORT, 28251).
 
 -spec start(any(), term()) -> {ok, pid()}
-                           | {ok, pid(), term()}
-                           | {error, any()}.
+                           |  {ok, pid(), term()}
+                           |  {error, any()}.
 start(_Type, _Args) ->
-    inets:start(),
     ets:new(erlrest_global_memory, [public, set, named_table]),
     %% let the user defined module do initialization
     route_handler:init(),
