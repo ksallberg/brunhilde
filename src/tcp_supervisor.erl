@@ -18,7 +18,7 @@ init([]) ->
                                        ),
     spawn_link(fun empty_listeners/0),
     {ok, {{simple_one_for_one, 10, 60},
-          [{socket,
+          [{tcp_supervisor,
             {tcp_server, start_link, [ListenSocket]}, % pass the socket!
             temporary, 1000, worker, [tcp_server]}
           ]}}.

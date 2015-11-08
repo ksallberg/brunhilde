@@ -11,7 +11,7 @@
                   tcp_supervisor
                  ]
   },
-  {registered,   []},
+  {registered,   [tcp_supervisor]},
   {applications, [kernel, stdlib]},
   %%
   %% mod: Specify the module name to start the application, plus args

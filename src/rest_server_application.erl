@@ -12,11 +12,11 @@
                            | {ok, pid(), term()}
                            | {error, any()}.
 start(_Type, _Args) ->
+    inets:start(),
     ets:new(erlrest_global_memory, [public, set, named_table]),
     %% let the user defined module do initialization
     route_handler:init(),
-    supervisor:start_link(tcp_supervisor, []). %,
-    %tcp_supervisor:empty_listeners().
+    tcp_supervisor:start_link().
 
 -spec stop(any()) -> ok.
 stop(_State) ->

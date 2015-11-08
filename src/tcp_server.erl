@@ -13,13 +13,13 @@
 
 -record(state, {socket}). % the current socket
 
-start_link(undefined) ->
-    io:format("error!~n");
+-define(SOCK(Msg), {tcp, _Port, Msg}).
 
 start_link(Socket) ->
     gen_server:start_link(?MODULE, Socket, []).
 
 init(Socket) ->
+    io:format("tcp_server created~n"),
     %% properly seeding the process
     <<A:32, B:32, C:32>> = crypto:rand_bytes(12),
     random:seed({A,B,C}),
@@ -28,28 +28,33 @@ init(Socket) ->
     gen_server:cast(self(), accept),
     {ok, #state{socket=Socket}}.
 
-code_change(_, _, _) ->
-    {ok, hej}.
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
-handle_call(_, _, _) ->
-    {ok, hej}.
+handle_call(_E, _From, State) ->
+    {noreply, State}.
 
 handle_cast(accept, S = #state{socket=ListenSocket}) ->
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
     %% Remember that thou art dust, and to dust thou shalt return.
     %% We want to always keep a given number of children in this app.
     tcp_supervisor:start_socket(), % a new acceptor is born, praise the lord
-    %send(AcceptSocket, "What's your character's name?", []),
+    send(AcceptSocket, "What's your character's name?", []),
     {noreply, S#state{socket=AcceptSocket}};
 
-handle_cast(_, _) ->
-    {ok, hej}.
+handle_cast(_, State) ->
+    {noreply, State}.
 
-terminate(_, _) ->
-    {ok, hej}.
+terminate(_, _State) ->
+    ok.
 
-handle_info(_, _) ->
-    {ok, hej}.
+handle_info(?SOCK(Str), State) ->
+    io:format("Str received: " ++ Str ++ "~n"),
+    gen_tcp:close(State#state.socket),
+    {noreply, State};
+
+handle_info(_, State) ->
+    {noreply, State}.
 
 %% %% No request JSON given...
 %% -spec respond(state()) -> ok.
@@ -101,3 +106,8 @@ handle_info(_, _) ->
 %%                     {noreply, NewState, ?TIMEOUT}
 %%             end
 %%     end;
+
+send(Socket, Str, Args) ->
+    ok = gen_tcp:send(Socket, io_lib:format(Str++"~n", Args)),
+    ok = inet:setopts(Socket, [{active, once}]),
+    ok.
