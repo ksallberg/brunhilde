@@ -11,26 +11,36 @@
 
 -behavior(gen_server).
 
+-record(state, {socket}). % the current socket
+
 start_link(undefined) ->
     io:format("error!~n");
 
 start_link(Socket) ->
     gen_server:start_link(?MODULE, Socket, []).
 
-init(_Socket) ->
+init(Socket) ->
     %% properly seeding the process
     <<A:32, B:32, C:32>> = crypto:rand_bytes(12),
     random:seed({A,B,C}),
     %% Because accepting a connection is a blocking function call,
     %% we can not do it in here. Forward to the server loop!
     gen_server:cast(self(), accept),
-    {ok, hej}.
+    {ok, #state{socket=Socket}}.
 
 code_change(_, _, _) ->
     {ok, hej}.
 
 handle_call(_, _, _) ->
     {ok, hej}.
+
+handle_cast(accept, S = #state{socket=ListenSocket}) ->
+    {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
+    %% Remember that thou art dust, and to dust thou shalt return.
+    %% We want to always keep a given number of children in this app.
+    tcp_supervisor:start_socket(), % a new acceptor is born, praise the lord
+    %send(AcceptSocket, "What's your character's name?", []),
+    {noreply, S#state{socket=AcceptSocket}};
 
 handle_cast(_, _) ->
     {ok, hej}.
