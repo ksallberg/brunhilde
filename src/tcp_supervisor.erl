@@ -1,3 +1,5 @@
+%% Credits: http://learnyousomeerlang.com/buckets-of-sockets
+
 -module(tcp_supervisor).
 -behavior(supervisor).
 
@@ -8,7 +10,7 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    Port = 28251,
+    {ok, Port} = application:get_env(port),
     %% Set the socket into {active_once} mode.
     %% See sockserv_serv comments for more details
     {ok, ListenSocket} = gen_tcp:listen(Port,

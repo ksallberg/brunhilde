@@ -17,6 +17,6 @@
   %% mod: Specify the module name to start the application, plus args
   %%
   {mod, {rest_server_application, []}},
-  {env, []}
+  {env, [{port,28251}]}
  ]
 }.
