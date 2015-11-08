@@ -6,10 +6,9 @@
 -define(MAX_RESTART, 5).
 -define(MAX_TIME,    60).
 
-%% Supervisor behaviour callbacks
-%% FIXME: Very weak type specification... Almost worse than nothing at all...
--spec init([any()]) -> tuple().
+%% Start supervisor for the tcp_listener module.
 init([Port, Module]) ->
+    io:format("Hej!~n"),
     {ok,
      {_SupFlags = {one_for_one, ?MAX_RESTART, ?MAX_TIME},
       _ChildSpecs =
@@ -36,18 +35,18 @@ init([Port, Module]) ->
      }
     };
 
-% Supervisor behaviour callbacks
-init([Module]) ->
+% Start supervisor fot
+init([tcp_reply]) ->
     {ok,
      {_SupFlags = {simple_one_for_one, ?MAX_RESTART, ?MAX_TIME},
       _ChildSpecs =
-          [% TCP Client
-           {tcp_client_sup,           %% Id
-            {Module, start_link, []}, %% StartFun
-            temporary,                %% Restart
-            2000,                     %% Shutdown
-            worker,                   %% Type
-            []                        %% Modules
+          [
+           {tcp_reply_supervisor,        %% Id
+            {tcp_reply, start_link, []}, %% StartFun
+            temporary,                   %% Restart
+            2000,                        %% Shutdown
+            worker,                      %% Type
+            []                           %% Modules
            }
           ]
      }

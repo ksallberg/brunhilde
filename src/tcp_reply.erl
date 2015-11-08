@@ -40,6 +40,7 @@ set_socket(Pid, Socket) when is_pid(Pid), is_port(Socket) ->
 
 -spec init([]) -> {ok, state()}.
 init([]) ->
+    io:format("TCP_REPLY STARTING!!!~n"),
     process_flag(trap_exit, true),
     {ok, #state{}}.
 

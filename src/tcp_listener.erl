@@ -16,11 +16,6 @@
         }).
 
 -type state()  :: #state{}.
--type child() :: any().
-
--spec start_client() -> {ok, child()} | {ok, child(), term()} | {error, any()}.
-start_client() ->
-    supervisor:start_child(tcp_client_sup, []).
 
 -spec start_link(integer(), atom()) -> {ok, pid()} | ignore | {error, any()}.
 start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
@@ -28,6 +23,7 @@ start_link(Port, Module) when is_integer(Port), is_atom(Module) ->
 
 -spec init([integer() | atom()]) -> {ok, state()} | {stop, any()}.
 init([Port, Module]) ->
+    io:format("TCP LISTENER STARTING!!! ~p~n", [Module]),
     process_flag(trap_exit, true),
     Opts = [list,
             {packet, 0},
@@ -65,7 +61,7 @@ handle_info({inet_async, ListSock, Ref, {ok, CliSock}},
             {error, Reason} -> exit({set_sockopt, Reason})
         end,
 
-        {ok, Pid} = start_client(),
+        {ok, Pid} = supervisor:start_child(tcp_reply_supervisor, []),
         gen_tcp:controlling_process(CliSock, Pid),
         Module:set_socket(Pid, CliSock),
 
