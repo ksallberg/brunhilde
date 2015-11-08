@@ -6,7 +6,6 @@
   {modules,      [tcp_listener,
                   tcp_reply,
                   battle_ship,
-                  commands,
                   http_parser,
                   rest_server_app,
                   rest_server_supervisor,
