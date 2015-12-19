@@ -14,17 +14,13 @@ rebar get-deps
 <br/>
 rebar compile
 <br/>
-. start.sh
+./start.sh
 <h5>To stop:</h5>
 1> application:stop(rest_server).
 <h3>Dialyzer:</h3>
 dialyzer --src src/
-<h3>Info:</h3>
-rest_server_app :: OTP application<br/>
-route_handler   :: Normal erl file<br/>
-battle_ship     :: Normal erl file<br/>
-tcp_listener    :: OTP gen_server<br/>
-tcp_reply       :: OTP gen_server<br/>
 <br/>
-OTP design (and a lot of the code) taken from:<br/>
-http://erlangcentral.org/wiki/index.php?title=Building_a_Non-blocking_TCP_server_using_OTP_principles
+Port is specified in ebin/rest_server.app
+<br/>
+The idea is to specify REST routes in src/route_handler.erl
+<br>

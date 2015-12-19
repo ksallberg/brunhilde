@@ -1,7 +1,7 @@
 %% run as: application:start(rest_server)
 {application, rest_server,
  [{description,  "Rest server"},
-  {vsn,          "1.0"},
+  {vsn,          "1.1"},
   {id,           "rest_server"},
   {modules,      [battle_ship,
                   http_parser,
@@ -17,6 +17,6 @@
   %% mod: Specify the module name to start the application, plus args
   %%
   {mod, {rest_server_application, []}},
-  {env, [{port,28251}]}
+  {env, [{port, 28251}]}
  ]
 }.

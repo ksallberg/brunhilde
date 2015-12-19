@@ -1,12 +1,8 @@
 -module(rest_server_application).
-
 -author('kristian@purestyle.se').
 
 -behaviour(application).
-
 -export([start/2, stop/1]).
-
--define(DEF_PORT, 28251).
 
 -spec start(any(), term()) -> {ok, pid()}
                            |  {ok, pid(), term()}

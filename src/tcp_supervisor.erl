@@ -6,6 +6,8 @@
 -export([start_link/0, start_socket/0, empty_listeners/0]).
 -export([init/1]).
 
+-compile(export_all).
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -13,6 +15,7 @@ init([]) ->
     {ok, Port} = application:get_env(port),
     %% Set the socket into {active_once} mode.
     %% See sockserv_serv comments for more details
+    emit_terminal_box(Port),
     {ok, ListenSocket} = gen_tcp:listen(Port,
                                         [list,
                                          {packet, 0},
@@ -37,3 +40,12 @@ start_socket() ->
 empty_listeners() ->
     [start_socket() || _ <- lists:seq(1,20)],
     ok.
+
+emit_terminal_box(Port) ->
+    PortStr = lists:flatten(io_lib:format("~p", [Port])),
+    Msg = lists:flatten(io_lib:format("% Erlrest started. "
+                                      "Listening at port: ~s. %", [PortStr])),
+    Line = [$% || _ <- lists:seq(1, length(Msg))],
+    io:format("~n~s~n", [Line]),
+    io:format("~s~n",   [Msg]),
+    io:format("~s~n",   [Line]).
