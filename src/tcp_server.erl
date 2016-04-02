@@ -1,15 +1,16 @@
 -module(tcp_server).
+
 -author('kristian@purestyle.se').
 
 -behaviour(gen_server).
 
--export([start_link/1,
-         set_socket/2,
-         init/1,
-         handle_cast/2,
+-export([start_link/1]).
+
+-export([init/1,
          handle_call/3,
-         terminate/2,
+         handle_cast/2,
          handle_info/2,
+         terminate/2,
          code_change/3]).
 
 -import(jiffy, [decode/1]).
@@ -44,10 +45,6 @@ init(Socket) ->
     gen_server:cast(self(), accept),
     {ok, #state{socket=Socket, data="", body_length=-1, route=unknown}}.
 
--spec set_socket(pid(), port()) -> ok. %% cast = ok
-set_socket(Pid, Socket) when is_pid(Pid), is_port(Socket) ->
-    gen_server:cast(Pid, {socket_ready, Socket}).
-
 %% No request JSON given...
 respond(#state{socket = S, data = [], route = Route,
                method = Method, parameters = Parameters}) ->
@@ -71,10 +68,10 @@ handle_cast(accept, S = #state{socket=ListenSocket}) ->
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
     %% Remember that thou art dust, and to dust thou shalt return.
     %% We want to always keep a given number of children in this app.
-    tcp_supervisor:start_socket(), % a new acceptor is born, praise the lord
+    tcp_supervisor:start_socket(),
     {noreply, S#state{socket=AcceptSocket}};
 
-%% Handle the actual client connecting and requesting something (finished)
+%% Handle the actual client connecting and requesting something
 handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
     case length(Data ++ DBuf) == BL of
         true ->

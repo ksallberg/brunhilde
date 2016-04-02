@@ -13,8 +13,6 @@ start_link() ->
 
 init([]) ->
     {ok, Port} = application:get_env(port),
-    %% Set the socket into {active_once} mode.
-    %% See sockserv_serv comments for more details
     emit_terminal_box(Port),
     {ok, ListenSocket} = gen_tcp:listen(Port,
                                         [list,
