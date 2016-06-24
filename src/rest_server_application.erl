@@ -13,10 +13,11 @@ start(_Type, _Args) ->
     ets:new(erlrest_global_memory, [public, set, named_table]),
     {ok, [{erlrest_servers, ServLs}]} = file:consult("servers.conf"),
     %% Convert settings file to #server{} records
-    Servers = lists:map(fun({Name, Encoding, Port}) ->
+    Servers = lists:map(fun({Name, Encoding, Port, Workers}) ->
                                 #server{name     = Name,
                                         encoding = Encoding,
-                                        port     = Port}
+                                        port     = Port,
+                                        workers  = Workers}
                         end, ServLs),
     rest_server_supervisor:start_link(Servers).
 

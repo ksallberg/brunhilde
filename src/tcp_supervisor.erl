@@ -20,7 +20,9 @@ init([Servers]) ->
 
 start_server(#server{name     = Name,
                      encoding = _Encoding,
-                     port     = Port} = Server) ->
+                     port     = Port,
+                     workers  = Workers
+                    } = Server) ->
     emit_terminal_box(Port),
     %% Initialize the server
     erlang:apply(Name, init, []),
@@ -33,7 +35,7 @@ start_server(#server{name     = Name,
                                        ),
     SpawnFun = fun() ->
                        [start_socket(ListenSocket, Server)
-                        || _ <- lists:seq(1,10)],
+                        || _ <- lists:seq(1, Workers)],
                        ok
                end,
     spawn_link(SpawnFun).

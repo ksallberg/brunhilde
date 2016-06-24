@@ -2,5 +2,6 @@
 
 -record(server, { name      :: atom(),
                   encoding  :: atom(),
-                  port      :: integer()
+                  port      :: integer(),
+                  workers   :: integer()
                 }).
