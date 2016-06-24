@@ -15,7 +15,7 @@ init([Servers]) ->
     {ok, {{simple_one_for_one, 10, 60},
           [{tcp_supervisor,
             {tcp_server, start_link, []},
-            temporary, 1000, worker, [tcp_server]}
+            transient, 1000, worker, [tcp_server]}
           ]}}.
 
 start_server(#server{name     = Name,
