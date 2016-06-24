@@ -4,8 +4,9 @@
 
 -behaviour(gen_server).
 
--export([start_link/1]).
+-include("include/erlrest.hrl").
 
+-export([start_link/1]).
 -export([init/1,
          handle_call/3,
          handle_cast/2,
@@ -17,6 +18,7 @@
 
 % State while receiving bytes from the tcp socket
 -record(state, { socket      :: port()                 %% client socket
+               , server      :: #server{}              %% belongs to server
                , addr        :: port()                 %% client address
                , data        :: string()               %% collected data
                , body_length :: integer()              %% total body length
@@ -33,42 +35,46 @@
 
 -define(SOCK(Msg), {tcp, _Port, Msg}).
 
-start_link(Socket) ->
-    gen_server:start_link(?MODULE, Socket, []).
+start_link({ListenSocket, Server}) ->
+    gen_server:start_link(?MODULE, {ListenSocket, Server}, []).
 
-init(Socket) ->
+init({Socket, Server}) ->
     %% properly seeding the process
     <<A:32, B:32, C:32>> = crypto:strong_rand_bytes(12),
     rand:seed(exs1024, {A,B,C}),
     %% Because accepting a connection is a blocking function call,
     %% we can not do it in here. Forward to the server loop!
     gen_server:cast(self(), accept),
-    {ok, #state{socket=Socket, data="", body_length=-1, route=unknown}}.
+    {ok, #state{socket=Socket, server=Server,
+                data="", body_length=-1, route=unknown}}.
 
 %% No request JSON given...
 respond(#state{socket = S, data = [], route = Route,
-               method = Method, parameters = Parameters}) ->
-    Answer     = route_handler:match(Method, Route, no_json, Parameters),
+               method = Method, parameters = Parameters,
+               server = #server{name = ServName}}) ->
+    Answer     = erlang:apply(ServName, match,
+                              [Method, Route, no_json, Parameters]),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S);
 
 %% Request JSON given...
 respond(#state{socket = S, data = Body, route = Route,
-               method = Method, parameters = Parameters}) ->
+               method = Method, parameters = Parameters,
+               server = #server{name = ServName}}) ->
     JsonObj    = jiffy:decode(Body),
-    Answer     = route_handler:match(Method, Route, JsonObj, Parameters),
+    Answer     = erlang:apply(ServName, match,
+                              [Method, Route, JsonObj, Parameters]),
     JsonReturn = jiffy:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S).
 
 -spec handle_cast({data, string()} | timeout | {socket_ready, port()}, state())
     -> {stop, normal, state()} | {noreply, state(), infinity}.
-handle_cast(accept, S = #state{socket=ListenSocket}) ->
+handle_cast(accept, S = #state{socket=ListenSocket,
+                               server=Server}) ->
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
-    %% Remember that thou art dust, and to dust thou shalt return.
-    %% We want to always keep a given number of children in this app.
-    tcp_supervisor:start_socket(),
+    tcp_supervisor:start_socket(ListenSocket, Server),
     {noreply, S#state{socket=AcceptSocket}};
 
 %% Handle the actual client connecting and requesting something

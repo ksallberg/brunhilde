@@ -1,19 +1,29 @@
-%% Credits: http://learnyousomeerlang.com/buckets-of-sockets
-
 -module(tcp_supervisor).
 -behavior(supervisor).
 
--export([start_link/0, start_socket/0, empty_listeners/0]).
--export([init/1]).
+-include("include/erlrest.hrl").
 
--compile(export_all).
+-export([start_link/1,
+         init/1,
+         start_socket/2]).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(Servers) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers]).
 
-init([]) ->
-    {ok, Port} = application:get_env(port),
+init([Servers]) ->
+    lists:foreach(fun start_server/1, Servers),
+    {ok, {{simple_one_for_one, 10, 60},
+          [{tcp_supervisor,
+            {tcp_server, start_link, []},
+            temporary, 1000, worker, [tcp_server]}
+          ]}}.
+
+start_server(#server{name     = Name,
+                     encoding = _Encoding,
+                     port     = Port} = Server) ->
     emit_terminal_box(Port),
+    %% Initialize the server
+    erlang:apply(Name, init, []),
     {ok, ListenSocket} = gen_tcp:listen(Port,
                                         [list,
                                          {packet, 0},
@@ -21,23 +31,15 @@ init([]) ->
                                          {keepalive, true},
                                          {backlog, 30}]
                                        ),
-    spawn_link(fun empty_listeners/0),
-    {ok, {{simple_one_for_one, 10, 60},
-          [{tcp_supervisor,
-            {tcp_server, start_link, [ListenSocket]}, % pass the socket!
-            temporary, 1000, worker, [tcp_server]}
-          ]}}.
+    SpawnFun = fun() ->
+                       [start_socket(ListenSocket, Server)
+                        || _ <- lists:seq(1,10)],
+                       ok
+               end,
+    spawn_link(SpawnFun).
 
-start_socket() ->
-    supervisor:start_child(?MODULE, []).
-
-%% Start with 20 listeners so that many multiple connections can
-%% be started at once, without serialization. In best circumstances,
-%% a process would keep the count active at all times to insure nothing
-%% bad happens over time when processes get killed too much.
-empty_listeners() ->
-    [start_socket() || _ <- lists:seq(1,20)],
-    ok.
+start_socket(ListenSocket, Server) ->
+    supervisor:start_child(?MODULE, [{ListenSocket, Server}]).
 
 emit_terminal_box(Port) ->
     PortStr = lists:flatten(io_lib:format("~p", [Port])),

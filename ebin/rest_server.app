@@ -3,10 +3,10 @@
  [{description,  "Rest server"},
   {vsn,          "1.1"},
   {id,           "rest_server"},
-  {modules,      [battle_ship,
+  {modules,      [exec_supervisor,
                   http_parser,
                   rest_server_application,
-                  route_handler,
+                  rest_server_supervisor,
                   tcp_server,
                   tcp_supervisor
                  ]

@@ -1,4 +1,5 @@
 #!/bin/bash
+erlc -o servers/ servers/*.erl
 erl -boot start_sasl -pa ebin -pa deps/jiffy/ebin \
-    -eval "application:start(rest_server)" \
+    -pa servers -eval "application:start(rest_server)" \
     -config ebin/sys.config
