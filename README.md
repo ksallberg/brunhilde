@@ -1,4 +1,4 @@
-erlrest
+erlrest (tested with Erlang OTP R19)
 =======
 
 Erlang/OTP rest server listening for user specified routes.

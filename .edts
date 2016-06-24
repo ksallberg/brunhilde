@@ -1,0 +1,3 @@
+:name "erlrest"
+:lib-dirs '("deps" "lib")
+:app-include-dirs '("include")
