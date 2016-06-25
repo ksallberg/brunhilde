@@ -1,6 +1,8 @@
 -module(helloworld).
 -export([match/4, init/0]).
 
+-behaviour(rest_handler).
+
 %% Called upon the start of the server, server
 %% can do whatever it wishes do to here.
 -spec init() -> atom().

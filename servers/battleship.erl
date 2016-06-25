@@ -1,6 +1,8 @@
 -module(battleship).
 -export([match/4, init/0]).
 
+-behaviour(rest_handler).
+
 %% tip: there is an application wide ets table
 %% called erlrest_global_memory that might come in handy here
 

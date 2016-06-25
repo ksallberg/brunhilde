@@ -2,25 +2,43 @@ erlrest (tested with Erlang OTP R19)
 =======
 
 Erlang/OTP rest server listening for user specified routes.
-<br/>
-Communicating in json.
-<h3>Requires:</h3>
-rebar:<br>
-sudo apt-get install rebar (or equivalent)
-<h3>Uses:</h3>
-erlang-jiffy (automatic git clone through rebar)
-<h3>Usage:</h3>
+
+#Requires:
+* rebar: sudo apt-get install rebar (or equivalent)
+* erlang-jiffy: automatic git clone through rebar
+
+#Usage:
+
+```
 rebar get-deps
-<br/>
 rebar compile
-<br/>
 ./start.sh
-<h5>To stop:</h5>
-1> application:stop(rest_server).
-<h3>Dialyzer:</h3>
+```
+
+#Dialyzer:
 dialyzer --src src/
-<br/>
-Port is specified in ebin/rest_server.app
-<br/>
-The idea is to specify REST routes in src/route_handler.erl
-<br>
+
+#Running virtual servers/apps:
+
+Virtual servers are defined in servers/ and have to use the
+rest_handler behaviour. Give a list of virtual servers to
+start in servers.conf. The format is the following four tuple:
+
+```
+{name of rest_handler implementation (available in servers/),
+
+ encoding (currently only json is available through jiffy),
+
+ port,
+
+ amount of worker processes to simultaneously listen for
+ connecting clients and handle them.}
+```
+
+For example:
+```erlang
+{erlrest_servers,
+ [{battleship, json, 28251, 10},
+  {helloworld, json, 5030, 5}
+ ]}.
+```

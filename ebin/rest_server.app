@@ -1,10 +1,11 @@
 %% run as: application:start(rest_server)
 {application, rest_server,
  [{description,  "Rest server"},
-  {vsn,          "1.1"},
+  {vsn,          "1.2"},
   {id,           "rest_server"},
   {modules,      [exec_supervisor,
                   http_parser,
+                  rest_handler,
                   rest_server_application,
                   rest_server_supervisor,
                   tcp_server,
@@ -16,7 +17,6 @@
   %%
   %% mod: Specify the module name to start the application, plus args
   %%
-  {mod, {rest_server_application, []}},
-  {env, [{port, 28251}]}
+  {mod, {rest_server_application, []}}
  ]
 }.
