@@ -237,7 +237,7 @@ check_sunk_ships(ShipList, Shots) ->
 
 -spec to_visual(board()) -> [string()].
 to_visual(#board{ship_list=Ls, size=Size, shots=Shots}) ->
-    Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "~" end),
+    Matrix      = new_matrix(Size, Size, fun(_,_,_,_) -> "\~" end),
     ShipListMod = check_sunk_ships(Ls, Shots),
     ShotsAdded  = lists:foldl(fun({X, Y}, AccMatrix) ->
                                   Repr = repr_for_shot({X, Y}, ShipListMod),
