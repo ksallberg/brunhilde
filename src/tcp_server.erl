@@ -52,7 +52,7 @@ respond(#state{socket = S, data = [], route = Route,
                server = #server{name = ServName}}) ->
     Answer     = erlang:apply(ServName, match,
                               [Method, Route, no_json, Parameters]),
-    JsonReturn = jiffy:encode(Answer),
+    JsonReturn = jsx:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S);
 
@@ -60,10 +60,10 @@ respond(#state{socket = S, data = [], route = Route,
 respond(#state{socket = S, data = Body, route = Route,
                method = Method, parameters = Parameters,
                server = #server{name = ServName}}) ->
-    JsonObj    = jiffy:decode(Body, [return_maps]),
+    JsonObj    = jsx:decode(?l2b(Body), [return_maps]),
     Answer     = erlang:apply(ServName, match,
                               [Method, Route, JsonObj, Parameters]),
-    JsonReturn = jiffy:encode(Answer),
+    JsonReturn = jsx:encode(Answer),
     ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
     gen_tcp:close(S).
 

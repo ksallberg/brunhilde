@@ -4,14 +4,13 @@ erlrest (tested with Erlang OTP R19)
 Erlang/OTP rest server listening for user specified routes.
 
 #Requires:
-* rebar: sudo apt-get install rebar (or equivalent)
-* erlang-jiffy: automatic git clone through rebar
+* rebar3 (https://www.rebar3.org/)
+* jsx: git clone through rebar3
 
 #Usage:
 
 ```
-rebar get-deps
-rebar compile
+rebar3 compile
 ./start.sh
 ```
 
@@ -27,7 +26,7 @@ start in servers.conf. The format is the following four tuple:
 ```
 {name of rest_handler implementation (available in servers/),
 
- encoding (currently only json is available through jiffy),
+ encoding (currently only json is available through jsx),
 
  port,
 
