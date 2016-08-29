@@ -14,8 +14,6 @@
          terminate/2,
          code_change/3]).
 
--import(jiffy, [decode/1]).
-
 % State while receiving bytes from the tcp socket
 -record(state, { socket      :: port()                 %% client socket
                , server      :: #server{}              %% belongs to server
@@ -62,7 +60,7 @@ respond(#state{socket = S, data = [], route = Route,
 respond(#state{socket = S, data = Body, route = Route,
                method = Method, parameters = Parameters,
                server = #server{name = ServName}}) ->
-    JsonObj    = jiffy:decode(Body),
+    JsonObj    = jiffy:decode(Body, [return_maps]),
     Answer     = erlang:apply(ServName, match,
                               [Method, Route, JsonObj, Parameters]),
     JsonReturn = jiffy:encode(Answer),

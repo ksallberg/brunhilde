@@ -26,20 +26,21 @@ init() ->
 -spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,
 %% Register the player, OR error
-match(post, "/battleship/register/", {[Json]}, _Parameters) ->
+match(post, "/battleship/register/", Json, _Parameters) ->
     %% look at the Json, do something, and reply with a new json
-    {<<"player_name">>, PlayerName} = Json,
-    Players   = ets:lookup(erlrest_global_memory, players),
-    NewPlayer = #player{player_name = PlayerName, shots = []},
+    #{<<"player_name">> := PlayerName} = Json,
+    Players    = ets:lookup(erlrest_global_memory, players),
+    NewPlayer  = #player{player_name = PlayerName, shots = []},
+    WelcomeMsg = #{<<"status">> => <<"welcome">>},
     case Players of
         [] -> ets:insert(erlrest_global_memory, {players, [NewPlayer]}),
-              {[{<<"status">>, <<"welcome">>}]};
+              WelcomeMsg;
         _  -> [{players, Ls}] = Players,
               case lists:keysearch(PlayerName, #player.player_name, Ls) of
                  false -> ets:insert(erlrest_global_memory,
                                      {players, Ls ++ [NewPlayer]}),
-                          {[{<<"status">>, <<"welcome">>}]};
-                 _ -> {[{<<"status">>, <<"error, already registered">>}]}
+                          WelcomeMsg;
+                 _ -> #{<<"status">> => <<"error, already registered">>}
               end
     end;
 
@@ -48,43 +49,42 @@ match(post, "/battleship/register/", {[Json]}, _Parameters) ->
 %% Shoot and update the game board, OR error
 %% FIXME: Right now assumes the input format is correct, check it is
 match(post, "/battleship/shoot/", Json, _Parameters) ->
-    {Objs} = Json,
-    {_, PlayerName}  = lists:keyfind(<<"player_name">>, 1, Objs),
-    {_, Coordinates} = lists:keyfind(<<"shoot_at">>, 1, Objs),
+    PlayerName  = maps:get(<<"player_name">>, Json),
+    Coordinates = maps:get(<<"shoot_at">>, Json),
     [{players, Players}] = ets:lookup(erlrest_global_memory, players),
-    Player  = lists:keyfind(PlayerName, 2, Players),
+    Player = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
-            {[{<<"status">>, <<"error, no such plauer">>}]};
+            #{<<"status">> => <<"error, no such player">>};
         _ ->
             Shots      = Player#player.shots ++ [Coordinates],
             NewPlayer  = Player#player{shots=Shots},
             NewPlayers = lists:keyreplace(PlayerName, 2, Players, NewPlayer),
             ets:insert(erlrest_global_memory, {players, NewPlayers}),
-            {[{<<"status">>, <<"ok, shot added">>}]}
+            #{<<"status">> => <<"ok, shot added">>}
     end;
 
 %% returns the game board
-match(post, "/battleship/radar/", {[{<<"player_name">>, PlayerName}]}, _Ps) ->
+match(post, "/battleship/radar/", #{<<"player_name">> := PlayerName}, _Ps) ->
     [{players, Players}] = ets:lookup(erlrest_global_memory, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
         false ->
-            {[{<<"status">>, <<"error, no such player">>}]};
+            #{<<"status">> => <<"error, no such player">>};
         _ ->
             [{game_board, OriginalGameBoard}]
                 = ets:lookup(erlrest_global_memory, game_board),
             Shots = Player#player.shots,
             PlayerGameBoard = add_shots(Shots, OriginalGameBoard),
             Visual = to_visual(PlayerGameBoard),
-            {[{<<"board">>, to_binary(Visual)},
-              {<<"won">>, finished(PlayerGameBoard)}]}
+            #{<<"board">> => to_binary(Visual),
+              <<"won">>   => finished(PlayerGameBoard)}
     end;
 
 %% See all players and their current game boards.
 match(get, "/battleship/radar_all/", _, _Parameters) ->
     case ets:lookup(erlrest_global_memory, players) of
-        [] -> {[{<<"radar_all">>, <<"no players registered">>}]};
+        [] -> #{<<"radar_all">> => <<"no players registered">>};
         [{players, Players}] ->
             [{game_board, OriginalGameBoard}]
                 = ets:lookup(erlrest_global_memory, game_board),
@@ -93,36 +93,35 @@ match(get, "/battleship/radar_all/", _, _Parameters) ->
                       fun(#player{shots=Shots, player_name=PlayerName}) ->
                           PGameBoard = add_shots(Shots, OriginalGameBoard),
                           Visual     = to_visual_ships(PGameBoard),
-                          {[{<<"player_name">>, PlayerName},
-                            {<<"board">>,    to_binary(Visual)},
-                            {<<"finished">>, finished(PGameBoard)},
-                            {<<"shots">>,    length(Shots)}]}
+                          #{<<"player_name">> => PlayerName,
+                            <<"board">>       => to_binary(Visual),
+                            <<"finished">>    => finished(PGameBoard),
+                            <<"shots">>       => length(Shots)}
                       end, Players),
-            {[{<<"radar_all">>, ModPlayers}]}
+            #{<<"radar_all">> => ModPlayers}
    end;
 
 %% Clear the database and create a new round
 %% of battleship with no players
-match(post, "/battleship/reset/", {[Json]}, _Parameters) ->
-    {<<"password">>, Pw} = Json,
+match(post, "/battleship/reset/", #{<<"password">> := Pw}, _Parameters) ->
     case Pw of
         <<"pretty please">> ->
             ets:delete_all_objects(erlrest_global_memory),
             NewBoard = new_board(),
             ets:insert(erlrest_global_memory, {game_board, NewBoard}),
-            {[{<<"status">>, <<"ok, new round">>}]};
+            #{<<"status">> => <<"ok, new round">>};
         _ ->
-            {[{<<"status">>, <<"error, wrong password">>}]}
+            #{<<"status">> => <<"error, wrong password">>}
     end;
 
 match(get, "/battleship/info/", _Json, _Parameters) ->
-    {[{<<"info_text">>,
-       <<"This is a battleship game to show how to use erlrest">>}]};
+    #{<<"info_text">> =>
+      <<"This is a battleship game to show how to use erlrest">>};
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
 match(_Method, _Route, _Json, _Parameters) ->
-    {[{<<"error">>, <<"no route matching">>}]}.
+    #{<<"error">> => <<"no route matching">>}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%

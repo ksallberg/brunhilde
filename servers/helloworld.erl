@@ -11,7 +11,7 @@ init() ->
 
 -spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 match(get, "/helloworld/hello/", _Whatever, _Parameters) ->
-    {[{<<"hello">>, <<"hello2u">>}]};
+    #{<<"hello">> => <<"hello2u">>};
 
 match(get, _WhateverPath, _Whatever, _Parameters) ->
-    {[{<<"hello">>, <<"i dont know what youre saying">>}]}.
+    #{<<"hello">> => <<"i dont know what youre saying">>}.
