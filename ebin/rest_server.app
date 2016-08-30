@@ -7,6 +7,7 @@
                   rest_handler,
                   rest_server_application,
                   rest_server_supervisor,
+                  server_supervisor,
                   tcp_server,
                   tcp_supervisor
                  ]
