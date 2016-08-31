@@ -17,6 +17,7 @@
 -define(TIMEOUT, infinity).
 
 -record(state, { connections :: integer()
+               , server :: #server{}
                }).
 
 -type state() :: #state{}.
@@ -25,7 +26,10 @@ start_link(Server) ->
     gen_server:start_link(?MODULE, Server, []).
 
 init(Server) ->
-    {ok, Server}.
+    InitialState = #state{ server = Server
+                         , connections = 0
+                         },
+    {ok, InitialState}.
 
 handle_cast(timeout, State) ->
     error_logger:error_msg("~p Client connection timeout.~n", [self()]),
