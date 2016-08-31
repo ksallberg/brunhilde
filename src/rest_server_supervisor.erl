@@ -14,8 +14,15 @@ start_link(Servers) ->
 %% This supervisor starts a tcp_supervisor
 %% for each server defined by users.
 init([Servers]) ->
-    {ok, {{one_for_one, 10, 60},
-          [{rest_server_supervisor,
-            {tcp_supervisor, start_link, [Servers]},
-            permanent, 1000, supervisor, [tcp_supervisor]}
-          ]}}.
+    ChildSpec = [#{id       => rest_server_supervisor,
+                   start    => {tcp_supervisor,
+                                start_link,
+                                [Servers]},
+                   restart  => permanent,
+                   shutdown => 1000,
+                   type     => supervisor,
+                   modules  => [tcp_supervisor]}],
+    SupFlags = #{strategy  => one_for_one,
+                 intensity => 10,
+                 preiod    => 60},
+    {ok, {SupFlags, ChildSpec}}.
