@@ -41,3 +41,6 @@ For example:
   {helloworld, json, 5030, 5}
  ]}.
 ```
+
+#Supervisor tree:
+![alt tag](doc/sup_tree.png)

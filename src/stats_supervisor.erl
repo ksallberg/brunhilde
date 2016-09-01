@@ -1,4 +1,4 @@
--module(tracker_supervisor).
+-module(stats_supervisor).
 
 -behavior(supervisor).
 
@@ -12,14 +12,14 @@ start_link(Servers) ->
 
 init([Servers]) ->
     lists:foreach(fun start_server/1, Servers),
-    ChildSpec = [#{id       => tracker_supervisor,
-                   start    => {tracker_server,
+    ChildSpec = [#{id       => stats_supervisor,
+                   start    => {stats_server,
                                 start_link,
                                 []},
                    restart  => transient,
                    shutdown => 1000,
                    type     => worker,
-                   modules  => [tracker]}],
+                   modules  => [stats_server]}],
     SupFlags = #{strategy  => simple_one_for_one,
                  intensity => 10,
                  preiod    => 60},

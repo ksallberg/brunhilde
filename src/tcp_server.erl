@@ -130,7 +130,17 @@ handle_info(_Info, StateData) ->
     {noreply, StateData}.
 
 -spec terminate(any(), state()) -> ok.
-terminate(_Reason, #state{socket=Socket}) ->
+terminate(_Reason, #state{socket=Socket,
+                          server=Server}) ->
+    %% Collect statistics
+    case tracker_server:ask_for(Server#server.name) of
+        %% No stats server available
+        false ->
+            ok;
+        %% Send stats
+        Pid ->
+            gen_server:cast(Pid, inc_connections)
+    end,
     (catch gen_tcp:close(Socket)),
     ok.
 

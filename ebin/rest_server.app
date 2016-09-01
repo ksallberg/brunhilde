@@ -8,7 +8,10 @@
                   rest_server_application,
                   rest_server_supervisor,
                   tcp_server,
-                  tcp_supervisor
+                  tcp_supervisor,
+                  stats_supervisor,
+                  stats_server,
+                  tracker_server
                  ]
   },
   {registered,   [tcp_supervisor]},
