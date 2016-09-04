@@ -47,10 +47,7 @@ start_server({#{name     := Name,
                         || _ <- lists:seq(1, Workers)],
                        ok
                end,
-    spawn_link(SpawnFun);
-start_server(O) ->
-    io:format("... ~p~n", [O]).
-
+    spawn_link(SpawnFun).
 
 start_socket(ListenSocket, Server, Flags) ->
     supervisor:start_child(?MODULE, [ListenSocket, Server, Flags]).

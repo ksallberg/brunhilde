@@ -9,6 +9,12 @@
          init/1]).
 
 start_link(Servers, Flags) ->
+    case ?flag_set(?START_OBSERVER, Flags) of
+        true ->
+            observer:start();
+        false ->
+            ok
+    end,
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
 init([Servers, Flags]) ->

@@ -10,10 +10,13 @@
                            |  {ok, pid(), term()}
                            |  {error, any()}.
 start(_Type, _Args) ->
-    {ok, [#{collect_stats := CollectStats,
-            servers       := ServLs}]} = file:consult("servers.conf"),
-    Flags = mk_flags([{CollectStats, ?COLLECT_STATS}]),
-    rest_server_supervisor:start_link(ServLs, Flags).
+    {ok, [#{collect_stats  := CollectStats,
+            start_observer := StartObserver,
+            servers        := Servers}]} = file:consult("servers.conf"),
+    Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
+                     , {StartObserver, ?START_OBSERVER}
+                     ]),
+    rest_server_supervisor:start_link(Servers, Flags).
 
 -spec stop(any()) -> ok.
 stop(_State) ->
