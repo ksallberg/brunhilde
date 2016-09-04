@@ -5,13 +5,13 @@
 
 -include("include/erlrest.hrl").
 
--export([start_link/1,
+-export([start_link/2,
          init/1]).
 
-start_link(Servers) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers]).
+start_link(Servers, Flags) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
-init([Servers]) ->
+init([Servers, Flags]) ->
     TrackerSup = #{id       => rest_tracker_supervisor,
                    start    => {tracker_server,
                                 start_link,
@@ -33,7 +33,7 @@ init([Servers]) ->
     TCPSup = #{id       => rest_tcp_supervisor,
                start    => {tcp_supervisor,
                             start_link,
-                            [Servers]},
+                            [Servers, Flags]},
                restart  => permanent,
                shutdown => 1000,
                type     => supervisor,

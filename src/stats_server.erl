@@ -17,7 +17,7 @@
 -define(TIMEOUT, infinity).
 
 -record(state, { connections :: integer()
-               , server :: #server{}
+               , server :: term()
                }).
 
 -type state() :: #state{}.
@@ -25,7 +25,7 @@
 start_link(Server) ->
     gen_server:start_link(?MODULE, Server, []).
 
-init(Server = #server{name = Name}) ->
+init(Server = #{name := Name}) ->
     InitialState = #state{ server = Server
                          , connections = 0
                          },

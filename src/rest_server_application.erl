@@ -10,18 +10,18 @@
                            |  {ok, pid(), term()}
                            |  {error, any()}.
 start(_Type, _Args) ->
-    ets:new(erlrest_global_memory, [public, set, named_table]),
-    {ok, [{erlrest_servers, ServLs}]} = file:consult("servers.conf"),
-    %% Convert settings file to #server{} records
-    Servers = lists:map(fun({Name, Encoding, Port, Workers}) ->
-                                #server{name     = Name,
-                                        encoding = Encoding,
-                                        port     = Port,
-                                        workers  = Workers}
-                        end, ServLs),
-    rest_server_supervisor:start_link(Servers).
+    {ok, [#{collect_stats := CollectStats,
+            servers       := ServLs}]} = file:consult("servers.conf"),
+    Flags = mk_flags([{CollectStats, ?COLLECT_STATS}]),
+    rest_server_supervisor:start_link(ServLs, Flags).
 
 -spec stop(any()) -> ok.
 stop(_State) ->
-    ets:delete(erlrest_global_memory),
     ok.
+
+mk_flags([]) ->
+    0;
+mk_flags([{true, Flag}|Rest]) ->
+    Flag bor mk_flags(Rest);
+mk_flags([{false, _}|Rest]) ->
+    mk_flags(Rest).

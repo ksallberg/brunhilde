@@ -3,15 +3,16 @@
 
 -include("include/erlrest.hrl").
 
--export([start_link/1,
+-export([start_link/2,
          init/1,
-         start_socket/2]).
+         start_socket/3]).
 
-start_link(Servers) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers]).
+start_link(Servers, Flags) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
-init([Servers]) ->
-    lists:foreach(fun start_server/1, Servers),
+init([Servers, Flags]) ->
+    Servers1 = [{Server, Flags} || Server <- Servers],
+    lists:foreach(fun start_server/1, Servers1),
     ChildSpec = [#{id       => tcp_supervisor,
                    start    => {tcp_server,
                                 start_link,
@@ -25,11 +26,12 @@ init([Servers]) ->
                  preiod    => 60},
     {ok, {SupFlags, ChildSpec}}.
 
-start_server(#server{name     = Name,
-                     encoding = _Encoding,
-                     port     = Port,
-                     workers  = Workers
-                    } = Server) ->
+start_server({#{name     := Name,
+                protocol := _Protocol,
+                port     := Port,
+                workers  := Workers
+               } = Server,
+              Flags}) ->
     emit_terminal_box(Port),
     %% Initialize the server
     erlang:apply(Name, init, []),
@@ -41,14 +43,17 @@ start_server(#server{name     = Name,
                                          {backlog, 30}]
                                        ),
     SpawnFun = fun() ->
-                       [start_socket(ListenSocket, Server)
+                       [start_socket(ListenSocket, Server, Flags)
                         || _ <- lists:seq(1, Workers)],
                        ok
                end,
-    spawn_link(SpawnFun).
+    spawn_link(SpawnFun);
+start_server(O) ->
+    io:format("... ~p~n", [O]).
 
-start_socket(ListenSocket, Server) ->
-    supervisor:start_child(?MODULE, [{ListenSocket, Server}]).
+
+start_socket(ListenSocket, Server, Flags) ->
+    supervisor:start_child(?MODULE, [ListenSocket, Server, Flags]).
 
 emit_terminal_box(Port) ->
     PortStr = lists:flatten(io_lib:format("~p", [Port])),
