@@ -1,5 +1,8 @@
 -module(stats).
--export([match/4, init/0]).
+
+-export([ init/0
+        , routes/0
+        , wildcard/2]).
 
 -behaviour(rest_handler).
 
@@ -9,12 +12,16 @@
 init() ->
     ok.
 
--spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
+routes() ->
+    [{json, get, "/", fun handle_stats/2}].
 
-match(get, _WhateverPath, _Whatever, _Parameters) ->
+handle_stats(_Data, _Parameters) ->
     Stats = tracker_server:get_stats(),
     FormatFun = fun({Name, Connections}) ->
-                           #{<<"server name">> => atom_to_binary(Name, utf8),
-                             <<"total connections handled">> => Connections}
+                        #{<<"server name">> => atom_to_binary(Name, utf8),
+                          <<"total connections handled">> => Connections}
                 end,
     #{<<"stats">> => lists:map(FormatFun, Stats)}.
+
+wildcard(_Data, _Parameters) ->
+    <<"404">>.

@@ -1,5 +1,8 @@
 -module(battleship).
--export([match/4, init/0]).
+
+-export([ init/0
+        , routes/0
+        , wildcard/2]).
 
 -behaviour(rest_handler).
 
@@ -26,10 +29,18 @@ init() ->
     ets:insert(?DB, {game_board, NewBoard}),
     ok.
 
--spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
+routes() ->
+    [ {json, post, "/battleship/register/",  fun handle_register/2}
+    , {json, post, "/battleship/shoot/",     fun handle_shoot/2}
+    , {json, post, "/battleship/radar/",     fun handle_radar/2}
+    , {json, get,  "/battleship/radar_all/", fun handle_radar_all/2}
+    , {json, post, "/battleship/reset/",     fun handle_reset/2}
+    , {json, get,  "/battleship/info/",      fun handle_info/2}].
+
+%-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,
 %% Register the player, OR error
-match(post, "/battleship/register/", Json, _Parameters) ->
+handle_register(Json, _Parameters) ->
     %% look at the Json, do something, and reply with a new json
     #{<<"player_name">> := PlayerName} = Json,
     Players    = ets:lookup(?DB, players),
@@ -44,13 +55,13 @@ match(post, "/battleship/register/", Json, _Parameters) ->
                           WelcomeMsg;
                  _ -> #{<<"status">> => <<"error, already registered">>}
               end
-    end;
+    end.
 
 %% Get the player name from Json,
 %% Find its corresponding game board,
 %% Shoot and update the game board, OR error
 %% FIXME: Right now assumes the input format is correct, check it is
-match(post, "/battleship/shoot/", Json, _Parameters) ->
+handle_shoot(Json, _Parameters) ->
     PlayerName  = maps:get(<<"player_name">>, Json),
     Coordinates = maps:get(<<"shoot_at">>, Json),
     [{players, Players}] = ets:lookup(?DB, players),
@@ -64,10 +75,10 @@ match(post, "/battleship/shoot/", Json, _Parameters) ->
             NewPlayers = lists:keyreplace(PlayerName, 2, Players, NewPlayer),
             ets:insert(?DB, {players, NewPlayers}),
             #{<<"status">> => <<"ok, shot added">>}
-    end;
+    end.
 
 %% returns the game board
-match(post, "/battleship/radar/", #{<<"player_name">> := PlayerName}, _Ps) ->
+handle_radar(#{<<"player_name">> := PlayerName}, _Ps) ->
     [{players, Players}] = ets:lookup(?DB, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
@@ -80,10 +91,10 @@ match(post, "/battleship/radar/", #{<<"player_name">> := PlayerName}, _Ps) ->
             Visual = to_visual(PlayerGameBoard),
             #{<<"board">> => to_binary(Visual),
               <<"won">>   => finished(PlayerGameBoard)}
-    end;
+    end.
 
 %% See all players and their current game boards.
-match(get, "/battleship/radar_all/", _, _Parameters) ->
+handle_radar_all(_, _Parameters) ->
     case ets:lookup(?DB, players) of
         [] -> #{<<"radar_all">> => <<"no players registered">>};
         [{players, Players}] ->
@@ -99,11 +110,11 @@ match(get, "/battleship/radar_all/", _, _Parameters) ->
                             <<"shots">>       => length(Shots)}
                       end, Players),
             #{<<"radar_all">> => ModPlayers}
-   end;
+   end.
 
 %% Clear the database and create a new round
 %% of battleship with no players
-match(post, "/battleship/reset/", #{<<"password">> := Pw}, _Parameters) ->
+handle_reset(#{<<"password">> := Pw}, _Parameters) ->
     case Pw of
         <<"pretty please">> ->
             ets:delete_all_objects(?DB),
@@ -112,16 +123,16 @@ match(post, "/battleship/reset/", #{<<"password">> := Pw}, _Parameters) ->
             #{<<"status">> => <<"ok, new round">>};
         _ ->
             #{<<"status">> => <<"error, wrong password">>}
-    end;
+    end.
 
-match(get, "/battleship/info/", _Json, _Parameters) ->
+handle_info(_Json, _Parameters) ->
     #{<<"info_text">> =>
-      <<"This is a battleship game to show how to use erlrest">>};
+      <<"This is a battleship game to show how to use erlrest">>}.
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
-match(_Method, _Route, _Json, _Parameters) ->
-    #{<<"error">> => <<"no route matching">>}.
+wildcard(_Json, _Parameters) ->
+    <<"no route matching">>.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%

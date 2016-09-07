@@ -1,5 +1,8 @@
 -module(helloworld).
--export([match/4, init/0]).
+
+-export([ init/0
+        , routes/0
+        , wildcard/2]).
 
 -behaviour(rest_handler).
 
@@ -9,9 +12,11 @@
 init() ->
     ok.
 
--spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
-match(get, "/helloworld/hello/", _Whatever, _Parameters) ->
-    #{<<"hello">> => <<"hello2u">>};
+routes() ->
+    [{json, get, "/helloworld/hello/", fun handle_hello/2}].
 
-match(get, _WhateverPath, _Whatever, _Parameters) ->
-    #{<<"hello">> => <<"i dont know what youre saying">>}.
+handle_hello(_Data, _Parameters) ->
+    #{<<"hello">> => <<"hello2u">>}.
+
+wildcard(_Data, _Parameters) ->
+    <<"i dont know what youre saying">>.

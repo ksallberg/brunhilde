@@ -2,5 +2,9 @@
 
 -callback init() -> atom().
 
--callback match(atom(), string(), tuple() |
-                atom(), [{atom(), atom()}]) -> tuple().
+%% protocol, verb, address, callback
+-callback routes() ->
+    [{atom(), atom(), string(), term()}].
+
+-callback wildcard(term(), term()) ->
+    term().

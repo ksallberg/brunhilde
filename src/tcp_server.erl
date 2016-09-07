@@ -47,25 +47,49 @@ init([Socket, Server, Flags]) ->
     {ok, #state{socket=Socket, server=Server, flags=Flags,
                 data="", body_length=-1, route=unknown}}.
 
-%% No request JSON given...
+%% No request data given...
 respond(#state{socket = S, data = [], route = Route,
                method = Method, parameters = Parameters,
                server = #{name := ServName}}) ->
-    Answer     = erlang:apply(ServName, match,
-                              [Method, Route, no_json, Parameters]),
-    JsonReturn = jsx:encode(Answer),
-    ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
+    Routes = erlang:apply(ServName, routes, []),
+    case [{Proto, HandlerFun} ||
+             {Proto, XMethod, XRoute, HandlerFun} <- Routes,
+             Route == XRoute andalso Method == XMethod] of
+        [] ->
+            Answer = erlang:apply(ServName, wildcard, [no_data, Parameters]),
+            ok     = gen_tcp:send(S, http_parser:response(Answer));
+        [{json, HandlerFun}] ->
+            Answer     = HandlerFun(no_data, Parameters),
+            JsonReturn = jsx:encode(Answer),
+            ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
+        [{xml, _HandlerFun}] ->
+            unsupported;
+        [{html, _HandlerFun}] ->
+            unsupported
+    end,
     gen_tcp:close(S);
 
-%% Request JSON given...
+%% Request data given...
 respond(#state{socket = S, data = Body, route = Route,
                method = Method, parameters = Parameters,
                server = #{name := ServName}}) ->
-    JsonObj    = jsx:decode(?l2b(Body), [return_maps]),
-    Answer     = erlang:apply(ServName, match,
-                              [Method, Route, JsonObj, Parameters]),
-    JsonReturn = jsx:encode(Answer),
-    ok         = gen_tcp:send(S, http_parser:response(JsonReturn)),
+    Routes = erlang:apply(ServName, routes, []),
+    case [{Proto, HandlerFun} ||
+             {Proto, XMethod, XRoute, HandlerFun} <- Routes,
+             Route == XRoute andalso Method == XMethod] of
+        [] ->
+            Answer = erlang:apply(ServName, wildcard, [Body, Parameters]),
+            ok     = gen_tcp:send(S, http_parser:response(Answer));
+        [{json, HandlerFun}] ->
+            JsonObj    = jsx:decode(?l2b(Body), [return_maps]),
+            Answer     = HandlerFun(JsonObj, Parameters),
+            JsonReturn = jsx:encode(Answer),
+            ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
+        [{xml, _HandlerFun}] ->
+            unsupported;
+        [{html, _HandlerFun}] ->
+            unsupported
+    end,
     gen_tcp:close(S).
 
 -spec handle_cast({data, string()} | timeout | {socket_ready, port()}, state())
