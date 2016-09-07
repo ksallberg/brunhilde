@@ -21,18 +21,7 @@ dialyzer --src src/
 
 Virtual servers are defined in servers/ and have to use the
 rest_handler behaviour. Give a list of virtual servers to
-start in servers.conf. The format is the following four tuple:
-
-```
-{name of rest_handler implementation (available in servers/),
-
- encoding (currently only json is available through jsx),
-
- port,
-
- amount of worker processes to simultaneously listen for
- connecting clients and handle them.}
-```
+start in servers.conf.
 
 For example:
 ```erlang
