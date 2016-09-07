@@ -36,10 +36,19 @@ start in servers.conf. The format is the following four tuple:
 
 For example:
 ```erlang
-{erlrest_servers,
- [{battleship, json, 28251, 10},
-  {helloworld, json, 5030, 5}
- ]}.
+#{collect_stats  => true,
+  start_observer => false,
+  servers =>
+   [#{name     => battleship,
+      port     => 28251,
+      workers  => 10},
+    #{name     => helloworld,
+      port     => 5030,
+      workers  => 5},
+    #{name     => stats,
+      port     => 8080,
+      workers  => 2}
+   ]}.
 ```
 
 #Supervisor tree:

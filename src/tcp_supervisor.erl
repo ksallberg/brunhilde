@@ -27,7 +27,6 @@ init([Servers, Flags]) ->
     {ok, {SupFlags, ChildSpec}}.
 
 start_server({#{name     := Name,
-                protocol := _Protocol,
                 port     := Port,
                 workers  := Workers
                } = Server,
