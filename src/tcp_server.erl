@@ -64,8 +64,9 @@ respond(#state{socket = S, data = [], route = Route,
             ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
         [{xml, _HandlerFun}] ->
             unsupported;
-        [{html, _HandlerFun}] ->
-            unsupported
+        [{html, HandlerFun}] ->
+            Answer = HandlerFun(no_data, Parameters),
+            ok     = gen_tcp:send(S, http_parser:response(Answer))
     end,
     gen_tcp:close(S);
 
@@ -87,8 +88,9 @@ respond(#state{socket = S, data = Body, route = Route,
             ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
         [{xml, _HandlerFun}] ->
             unsupported;
-        [{html, _HandlerFun}] ->
-            unsupported
+        [{html, HandlerFun}] ->
+            Answer = HandlerFun(Body, Parameters),
+            ok     = gen_tcp:send(S, http_parser:response(Answer))
     end,
     gen_tcp:close(S).
 
