@@ -16,7 +16,8 @@ init() ->
 
 routes() ->
     [ {json, get, "/helloworld/hello/", fun handle_hello/2}
-    , {html, get, "/helloworld.html",   fun handle_html/2}].
+    , {html, get, "/helloworld.html",   fun handle_html/2}
+    , {html, get, "/helloworld2.html",  fun handle_html2/2}].
 
 handle_hello(_Data, _Parameters) ->
     #{<<"hello">> => <<"hello2u">>}.
@@ -28,6 +29,19 @@ handle_html(_Data, _Parameters) ->
            "  </head>"
            "  <body>"
            "    <h1>Hello world!!!</h1>"
+           "    <a href='/helloworld2.html'>Go somewhere</a>"
+           "  </body>"
+           "</html>",
+    ?l2b(Html).
+
+handle_html2(_Data, _Parameters) ->
+    Html = "<html>"
+           "  <head>"
+           "     <title>Hello!</title>"
+           "  </head>"
+           "  <body>"
+           "    <h1>Hello world2!!!</h1>"
+           "    <a href='/helloworld.html'>Go back</a>"
            "  </body>"
            "</html>",
     ?l2b(Html).
