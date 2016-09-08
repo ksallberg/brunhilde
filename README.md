@@ -1,6 +1,8 @@
 brunhilde (tested with Erlang OTP R19)
 =======
 
+![alt tag](doc/brunhilde.jpg)
+
 brunhilde is a minimal Erlang/OTP web server,
 ideal for rapid prototyping and hackathons/coding
 competitions. It is designed to be as simple as
