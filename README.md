@@ -1,7 +1,12 @@
-erlrest (tested with Erlang OTP R19)
+brunhilde (tested with Erlang OTP R19)
 =======
 
-Erlang/OTP rest server listening for user specified routes.
+brunhilde is a minimal Erlang/OTP web server,
+ideal for rapid prototyping and hackathons/coding
+competitions. It is designed to be as simple as
+possible, so that it can quickly be modified or
+debugged. It is not designed to provide high
+performance or be used in production.
 
 #Requires:
 * rebar3 (https://www.rebar3.org/)
