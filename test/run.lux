@@ -1,0 +1,72 @@
+[doc Test basic servers included in the release]
+
+[shell cli]
+    !make -C ../ start
+    ???Erlrest started. Listening at port: 28251.
+    ???Erlrest started. Listening at port: 5030.
+    ???Erlrest started. Listening at port: 8080.
+
+[shell queryprompt]
+    !curl localhost:5030
+    ???i dont know what youre saying
+    ?SH-PROMPT:
+    !curl http://localhost:5030/helloworld/hello/
+    ???{"hello":"hello2u"}
+    ?SH-PROMPT:
+    !curl http://localhost:5030/helloworld.html
+    ???<html>  <head>     <title>Hello!</title>  </head>  <body>    <h1>Hello world!!!</h1>    <a href='/helloworld2.html'>Go somewhere</a>  </body></html>
+    ?SH-PROMPT:
+
+[shell battleship]
+    !python ../test.py
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/register/
+    http://localhost:28251/battleship/register/
+    {"status":"welcome"}
+    """
+
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/register/
+    http://localhost:28251/battleship/register/
+    {"status":"welcome"}
+    """
+
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/shoot/
+    http://localhost:28251/battleship/shoot/
+    {"status":"ok, shot added"}
+    """
+
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/shoot/
+    http://localhost:28251/battleship/shoot/
+    {"status":"ok, shot added"}
+    """
+
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/radar/
+    http://localhost:28251/battleship/radar/
+    {"board":["----------","----------","-h--------","----------","----------","----------","----------","----------","----------","----------"],"won":"no"}
+    """
+
+    """???
+    Now looking at the reply (POST) from:  http://localhost:28251/battleship/radar/
+    http://localhost:28251/battleship/radar/
+    {"board":["----------","----------","----------","----------","----------","----m-----","----------","----------","----------","----------"],"won":"no"}
+    """
+
+    """???
+    Now looking at the reply (GET) from:  http://localhost:28251/battleship/info/
+    http://localhost:28251/battleship/info/
+    {"info_text":"This is a battleship game to show how to use erlrest"}
+    """
+
+    """???
+    Now looking at the reply (GET) from:  http://localhost:28251/battleship/radar_all/
+    http://localhost:28251/battleship/radar_all/
+    {"radar_all":[{"board":["--------o-","-o-o------","-h----oo--","-o--o-----","-o--o-o---","----------","--o-------","--o---ooo-","--o-------","---ooo----"],"finished":"no","player_name":"berra","shots":1},{"board":["--------o-","-o-o------","-o----oo--","-o--o-----","-o--o-o---","----m-----","--o-------","--o---ooo-","--o-------","---ooo----"],"finished":"no","player_name":"sara","shots":1}]}
+    """
+
+[shell cli]
+    !halt().
+    ?SH-PROMPT:

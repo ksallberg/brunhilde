@@ -17,3 +17,7 @@ clean:
 dialyzer:
 	dialyzer --src src/
 .PHONY: dialyzer
+
+test: build
+	_build/default/lib/lux/bin/lux test/run.lux
+.PHONY: test
