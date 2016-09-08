@@ -12,7 +12,7 @@
 start(_Type, _Args) ->
     {ok, [#{collect_stats  := CollectStats,
             start_observer := StartObserver,
-            servers        := Servers}]} = file:consult("servers.conf"),
+            servers        := Servers}]} = file:consult("brunhilde.conf"),
     Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
                      , {StartObserver, ?START_OBSERVER}
                      ]),

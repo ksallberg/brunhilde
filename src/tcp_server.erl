@@ -5,6 +5,7 @@
 -behaviour(gen_server).
 
 -include("include/erlrest.hrl").
+-include_lib("xmerl/include/xmerl.hrl").
 
 -export([start_link/3]).
 -export([init/1,
@@ -47,49 +48,42 @@ init([Socket, Server, Flags]) ->
     {ok, #state{socket=Socket, server=Server, flags=Flags,
                 data="", body_length=-1, route=unknown}}.
 
-%% No request data given...
-respond(#state{socket = S, data = [], route = Route,
+respond(#state{socket = S, data = Data0, route = Route,
                method = Method, parameters = Parameters,
                server = #{name := ServName}}) ->
     Routes = erlang:apply(ServName, routes, []),
+    Data   = case Data0 of
+                 [] -> no_data;
+                 _  -> Data0
+             end,
     case [{Proto, HandlerFun} ||
              {Proto, XMethod, XRoute, HandlerFun} <- Routes,
              Route == XRoute andalso Method == XMethod] of
         [] ->
-            Answer = erlang:apply(ServName, wildcard, [no_data, Parameters]),
+            Answer = erlang:apply(ServName, wildcard, [Data, Parameters]),
             ok     = gen_tcp:send(S, http_parser:response(Answer));
         [{json, HandlerFun}] ->
-            Answer     = HandlerFun(no_data, Parameters),
+            Answer = case Data of
+                         no_data ->
+                             HandlerFun(no_data, Parameters);
+                         _ ->
+                             JsonObj = jsx:decode(?l2b(Data), [return_maps]),
+                             HandlerFun(JsonObj, Parameters)
+                     end,
             JsonReturn = jsx:encode(Answer),
             ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
-        [{xml, _HandlerFun}] ->
-            unsupported;
+        [{xml, HandlerFun}] ->
+            Answer = case Data of
+                         no_data ->
+                             HandlerFun(no_data, Parameters);
+                         _ ->
+                             {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
+                             HandlerFun(XmlObj, Parameters)
+                     end,
+            XmlReturn = xmerl:export_simple(Answer, xmerl_xml),
+            ok        = gen_tcp:send(S, http_parser:response(XmlReturn));
         [{html, HandlerFun}] ->
-            Answer = HandlerFun(no_data, Parameters),
-            ok     = gen_tcp:send(S, http_parser:response(Answer))
-    end,
-    gen_tcp:close(S);
-
-%% Request data given...
-respond(#state{socket = S, data = Body, route = Route,
-               method = Method, parameters = Parameters,
-               server = #{name := ServName}}) ->
-    Routes = erlang:apply(ServName, routes, []),
-    case [{Proto, HandlerFun} ||
-             {Proto, XMethod, XRoute, HandlerFun} <- Routes,
-             Route == XRoute andalso Method == XMethod] of
-        [] ->
-            Answer = erlang:apply(ServName, wildcard, [Body, Parameters]),
-            ok     = gen_tcp:send(S, http_parser:response(Answer));
-        [{json, HandlerFun}] ->
-            JsonObj    = jsx:decode(?l2b(Body), [return_maps]),
-            Answer     = HandlerFun(JsonObj, Parameters),
-            JsonReturn = jsx:encode(Answer),
-            ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
-        [{xml, _HandlerFun}] ->
-            unsupported;
-        [{html, HandlerFun}] ->
-            Answer = HandlerFun(Body, Parameters),
+            Answer = HandlerFun(Data, Parameters),
             ok     = gen_tcp:send(S, http_parser:response(Answer))
     end,
     gen_tcp:close(S).
@@ -192,3 +186,4 @@ get_content_length(Headers) ->
                       {Num, _} = string:to_integer(A),
                       Num
     end.
+
