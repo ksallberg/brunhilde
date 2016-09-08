@@ -5,6 +5,3 @@
 %% protocol, verb, address, callback
 -callback routes() ->
     [{atom(), atom(), string(), term()}].
-
--callback wildcard(term(), term()) ->
-    term().

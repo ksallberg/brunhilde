@@ -1,8 +1,7 @@
 -module(helloworld).
 
 -export([ init/0
-        , routes/0
-        , wildcard/2]).
+        , routes/0]).
 
 -behaviour(rest_handler).
 
@@ -17,7 +16,8 @@ init() ->
 routes() ->
     [ {json, get, "/helloworld/hello/", fun handle_hello/2}
     , {html, get, "/helloworld.html",   fun handle_html/2}
-    , {html, get, "/helloworld2.html",  fun handle_html2/2}].
+    , {html, get, "/helloworld2.html",  fun handle_html2/2}
+    , {'*',                             fun handle_wildcard/2}].
 
 handle_hello(_Data, _Parameters) ->
     #{<<"hello">> => <<"hello2u">>}.
@@ -46,5 +46,5 @@ handle_html2(_Data, _Parameters) ->
            "</html>",
     ?l2b(Html).
 
-wildcard(_Data, _Parameters) ->
+handle_wildcard(_Data, _Parameters) ->
     <<"i dont know what youre saying">>.

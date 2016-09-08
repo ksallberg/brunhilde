@@ -1,8 +1,7 @@
 -module(stats).
 
 -export([ init/0
-        , routes/0
-        , wildcard/2]).
+        , routes/0]).
 
 -behaviour(rest_handler).
 
@@ -13,7 +12,8 @@ init() ->
     ok.
 
 routes() ->
-    [{json, get, "/", fun handle_stats/2}].
+    [ {json, get, "/", fun handle_stats/2}
+    , {'*',            fun handle_wildcard/2}].
 
 handle_stats(_Data, _Parameters) ->
     Stats = tracker_server:get_stats(),
@@ -23,5 +23,5 @@ handle_stats(_Data, _Parameters) ->
                 end,
     #{<<"stats">> => lists:map(FormatFun, Stats)}.
 
-wildcard(_Data, _Parameters) ->
+handle_wildcard(_Data, _Parameters) ->
     <<"404">>.

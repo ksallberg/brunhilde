@@ -60,7 +60,12 @@ respond(#state{socket = S, data = Data0, route = Route,
              {Proto, XMethod, XRoute, HandlerFun} <- Routes,
              Route == XRoute andalso Method == XMethod] of
         [] ->
-            Answer = erlang:apply(ServName, wildcard, [Data, Parameters]),
+            Answer = case lists:keyfind('*', 1, Routes) of
+                         false ->
+                             <<"404 error">>;
+                         {'*', WildcardFun} ->
+                             WildcardFun(Data, Parameters)
+                     end,
             ok     = gen_tcp:send(S, http_parser:response(Answer));
         [{json, HandlerFun}] ->
             Answer = case Data of

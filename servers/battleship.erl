@@ -1,8 +1,7 @@
 -module(battleship).
 
 -export([ init/0
-        , routes/0
-        , wildcard/2]).
+        , routes/0]).
 
 -behaviour(rest_handler).
 
@@ -35,7 +34,8 @@ routes() ->
     , {json, post, "/battleship/radar/",     fun handle_radar/2}
     , {json, get,  "/battleship/radar_all/", fun handle_radar_all/2}
     , {json, post, "/battleship/reset/",     fun handle_reset/2}
-    , {json, get,  "/battleship/info/",      fun handle_info/2}].
+    , {json, get,  "/battleship/info/",      fun handle_info/2}
+    , {'*',                                  fun handle_wildcard/2}].
 
 %-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,
@@ -131,7 +131,7 @@ handle_info(_Json, _Parameters) ->
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
-wildcard(_Json, _Parameters) ->
+handle_wildcard(_Json, _Parameters) ->
     <<"no route matching">>.
 
 
