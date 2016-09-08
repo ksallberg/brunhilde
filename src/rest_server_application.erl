@@ -2,7 +2,9 @@
 -author('kristian@purestyle.se').
 
 -behaviour(application).
--export([start/2, stop/1]).
+-export([ start/2
+        , stop/1
+        , do_start/3]).
 
 -include("include/erlrest.hrl").
 
@@ -12,7 +14,17 @@
 start(_Type, _Args) ->
     {ok, [#{collect_stats  := CollectStats,
             start_observer := StartObserver,
+            start_debugger := StartDebugger,
             servers        := Servers}]} = file:consult("brunhilde.conf"),
+    case StartDebugger of
+        false ->
+            do_start(CollectStats, StartObserver, Servers);
+        true ->
+            debugger:quick(?MODULE, do_start,
+                           [CollectStats, StartObserver, Servers])
+    end.
+
+do_start(CollectStats, StartObserver, Servers) ->
     Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
                      , {StartObserver, ?START_OBSERVER}
                      ]),
