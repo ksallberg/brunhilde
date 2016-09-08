@@ -17,8 +17,7 @@ performance or be used in production.
 #Usage:
 
 ```
-rebar3 compile
-./start.sh
+make build start
 ```
 
 #Dialyzer:
