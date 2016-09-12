@@ -19,5 +19,5 @@ dialyzer:
 .PHONY: dialyzer
 
 test: build
-	_build/default/lib/lux/bin/lux test/run.lux
+	lux test/
 .PHONY: test
