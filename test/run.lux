@@ -16,6 +16,9 @@
     !curl http://localhost:5030/helloworld.html
     ???<html>  <head>     <title>Hello!</title>  </head>  <body>    <h1>Hello world!!!</h1>    <a href='/helloworld2.html'>Go somewhere</a>  </body></html>
     ?SH-PROMPT:
+    !curl http://localhost:5030/helloworld/xml/
+    ???<?xml version="1.0"?><cheeses xmlns="http://cheese.com/names"><cheese><yarg><type>medium</type><country>nl</country></yarg></cheese></cheeses>
+    ?SH-PROMPT:
 
 [shell battleship]
     !python ../test.py

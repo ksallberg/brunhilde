@@ -216,4 +216,3 @@ get_content_length(Headers) ->
                       {Num, _} = string:to_integer(A),
                       Num
     end.
-
