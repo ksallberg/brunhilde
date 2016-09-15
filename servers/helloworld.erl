@@ -51,6 +51,8 @@ handle_html2(_Data, _Parameters) ->
            "  </head>"
            "  <body>"
            "    <h1>Hello world2!!!</h1>"
+           "    <img src='/helloworld/brunhilde.jpg'></img>"
+           "    <br/>"
            "    <a href='/helloworld.html'>Go back</a>"
            "  </body>"
            "</html>",
