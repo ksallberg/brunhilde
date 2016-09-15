@@ -19,9 +19,15 @@
     !curl http://localhost:5030/helloworld/xml/
     ???<?xml version="1.0"?><cheeses xmlns="http://cheese.com/names"><cheese><yarg><type>medium</type><country>nl</country></yarg></cheese></cheeses>
     ?SH-PROMPT:
+    !curl http://localhost:5030/error
+    ???{"hello":"error"}
+    ?SH-PROMPT:
+    !curl http://localhost:5040/error
+    ???curl: (7) Failed to connect to localhost port 5040: Connection refused
+    ?SH-PROMPT:
 
 [shell battleship]
-    !python ../test.py
+    !python test.py
     """???
     Now looking at the reply (POST) from:  http://localhost:28251/battleship/register/
     http://localhost:28251/battleship/register/
