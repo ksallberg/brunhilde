@@ -17,13 +17,19 @@ init() ->
 
 routes() ->
     [ {json, get, "/helloworld/hello/", fun handle_hello/2}
+    , {json, get, "/error",             fun handle_error/2}
     , {html, get, "/helloworld.html",   fun handle_html/2}
     , {html, get, "/helloworld2.html",  fun handle_html2/2}
     , {xml,  get, "/helloworld/xml/",   fun handle_xml/2}
     , {'*',                             fun handle_wildcard/2}].
 
-handle_hello(_Data, _Parameters) ->
+handle_hello(_Data, Parameters) ->
+    lager:log(info, self(), "Someone asked for ~p", [Parameters]),
     #{<<"hello">> => <<"hello2u">>}.
+
+handle_error(_Data, _Parameters) ->
+    lager:log(error, self(), "some error!"),
+    #{<<"hello">> => <<"error">>}.
 
 handle_html(_Data, _Parameters) ->
     Html = "<html>"

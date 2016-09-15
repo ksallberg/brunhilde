@@ -50,6 +50,7 @@ start(_Type, _Args) ->
     end.
 
 do_start(CollectStats, StartObserver, Servers) ->
+    lager:start(),
     Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
                      , {StartObserver, ?START_OBSERVER}
                      ]),

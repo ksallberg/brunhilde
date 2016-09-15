@@ -44,7 +44,7 @@
 -record(state, { socket      :: port()                 %% client socket
                , server      :: term()                 %% belongs to server
                , flags       :: integer()              %% all flags
-               , addr        :: port()                 %% client address
+               , addr        :: port() | undefined     %% client address
                , data        :: string()               %% collected data
                , body_length :: integer()              %% total body length
                , route       :: string()               %% route expressed
@@ -71,7 +71,7 @@ init([Socket, Server, Flags]) ->
     %% we can not do it in here. Forward to the server loop!
     gen_server:cast(self(), accept),
     {ok, #state{socket=Socket, server=Server, flags=Flags,
-                data="", body_length=-1, route=unknown}}.
+                data="", body_length=-1, route="unknown", parameters=[]}}.
 
 respond(#state{socket = S, data = Data0, route = Route,
                method = Method, parameters = Parameters,

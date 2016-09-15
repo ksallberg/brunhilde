@@ -42,6 +42,7 @@ start_link(Servers, Flags) ->
     end,
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
+
 init([Servers, Flags]) ->
     TrackerSup = #{id       => rest_tracker_supervisor,
                    start    => {tracker_server,

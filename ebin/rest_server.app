@@ -16,9 +16,15 @@
   },
   {registered,   [tcp_supervisor]},
   {applications, [kernel, stdlib]},
-  %%
-  %% mod: Specify the module name to start the application, plus args
-  %%
-  {mod, {rest_server_application, []}}
+  {mod, {rest_server_application, []}},
+  {lager,
+   [ {log_root, "log/"}
+   , {handlers, [ {lager_console_backend, info}
+                , {lager_file_backend, [{file, "error.log"}, {level, error}]}
+                , {lager_file_backend, [{file, "console.log"}, {level, info}]}
+                ]}
+   , {colored, true}
+   ]
+  }
  ]
 }.

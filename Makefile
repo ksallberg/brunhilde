@@ -9,6 +9,8 @@ clean:
 	rm -rf _build
 	rm -f ebin/*.beam
 	rm -f priv/*.beam
+	rm -rf lux_logs
+	rm -rf log/*.log
 .PHONY: clean
 
 # if no plt file:

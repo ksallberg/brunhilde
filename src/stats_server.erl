@@ -61,7 +61,8 @@ handle_cast(inc_connections, #state{connections = Connections} = State) ->
     NewState = State#state{connections = Connections + 1},
     {noreply, NewState}.
 
--spec handle_call(any(), {pid(), any()}, state()) -> {stop, tuple(), state()}.
+-spec handle_call(get_stats, {pid(), any()}, state()) ->
+                         {reply, integer(), state()}.
 handle_call(get_stats, _From, State) ->
     {reply, State#state.connections, State}.
 
