@@ -10,9 +10,11 @@ possible, so that it can quickly be modified or
 debugged. It is not designed to provide high
 performance or be used in production.
 
-#Requires:
+#Dependencies:
 * rebar3 (https://www.rebar3.org/)
-* jsx: git clone through rebar3
+* lager: fetched from rebar3
+* jsx: fetched from rebar3
+* erlydtl: fetched from rebar3
 
 #Usage:
 
@@ -21,18 +23,19 @@ make build start
 ```
 
 #Dialyzer:
-dialyzer --src src/
+make dialyzer (requires existing PLT)
 
 #Running virtual servers/apps:
 
 Virtual servers are defined in servers/ and have to use the
 rest_handler behaviour. Give a list of virtual servers to
-start in servers.conf.
+start in brunhilde.conf.
 
 For example:
 ```erlang
 #{collect_stats  => true,
   start_observer => false,
+  start_debugger => false,
   servers =>
    [#{name     => battleship,
       port     => 28251,
