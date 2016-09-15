@@ -16,12 +16,13 @@ init() ->
     ok.
 
 routes() ->
-    [ {json, get, "/helloworld/hello/", fun handle_hello/2}
-    , {json, get, "/error",             fun handle_error/2}
-    , {html, get, "/helloworld.html",   fun handle_html/2}
-    , {html, get, "/helloworld2.html",  fun handle_html2/2}
-    , {xml,  get, "/helloworld/xml/",   fun handle_xml/2}
-    , {'*',                             fun handle_wildcard/2}].
+    [ {json, get, "/helloworld/hello/",        fun handle_hello/2}
+    , {json, get, "/error",                    fun handle_error/2}
+    , {html, get, "/helloworld.html",          fun handle_html/2}
+    , {html, get, "/helloworld2.html",         fun handle_html2/2}
+    , {xml,  get, "/helloworld/xml/",          fun handle_xml/2}
+    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/2}
+    , {'*',                                    fun handle_wildcard/2}].
 
 handle_hello(_Data, Parameters) ->
     lager:log(info, self(), "Someone asked for ~p", [Parameters]),
@@ -69,6 +70,10 @@ tree() ->
                 namespace=#xmlNamespace{default=Ns1},
                 attributes=[#xmlAttribute{name=xmlns, value=Ns1}],
                 content=Content}.
+
+handle_pic(_, _) ->
+    {ok, Binary} = file:read_file("static/brunhilde.jpg"),
+    Binary.
 
 handle_wildcard(_Data, _Parameters) ->
     <<"i dont know what youre saying">>.

@@ -114,6 +114,9 @@ respond(#state{socket = S, data = Data0, route = Route,
             ok        = gen_tcp:send(S, http_parser:response(XmlReturn));
         [{html, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters),
+            ok     = gen_tcp:send(S, http_parser:response(Answer));
+        [{file, HandlerFun}] ->
+            Answer = HandlerFun(Data, Parameters),
             ok     = gen_tcp:send(S, http_parser:response(Answer))
     end,
     gen_tcp:close(S).

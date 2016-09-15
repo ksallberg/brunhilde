@@ -1,7 +1,7 @@
 brunhilde (tested with Erlang OTP R19)
 =======
 
-![alt tag](doc/brunhilde.jpg)
+![alt tag](static/brunhilde.jpg)
 
 brunhilde is a minimal Erlang/OTP web server,
 ideal for rapid prototyping and hackathons/coding
@@ -50,4 +50,4 @@ For example:
 ```
 
 #Supervisor tree:
-![alt tag](doc/sup_tree.png)
+![alt tag](static/sup_tree.png)
