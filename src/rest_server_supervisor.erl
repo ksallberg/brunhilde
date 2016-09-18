@@ -30,8 +30,8 @@
 
 -include("include/erlrest.hrl").
 
--export([start_link/2,
-         init/1]).
+-export([ start_link/2
+        , init/1]).
 
 start_link(Servers, Flags) ->
     case ?flag_set(?START_OBSERVER, Flags) of

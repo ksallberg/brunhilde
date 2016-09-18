@@ -66,6 +66,8 @@ handle_info(trigger, Servers = State) ->
     F = fun(#{name := ServerName}) ->
                 ServerNameStr = ?a2l(ServerName),
                 BeamFile = "priv/" ++ ServerNameStr,
+                code:purge(ServerName),
+                code:delete(ServerName),
                 code:load_abs(BeamFile)
         end,
     lists:foreach(F, Servers),
