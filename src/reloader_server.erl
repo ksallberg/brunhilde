@@ -45,6 +45,13 @@ start_link(Servers, Flags) ->
     gen_server:start_link(?MODULE, [Servers, Flags], []).
 
 init([Servers, Flags]) ->
+    case lists:member(?MODULE, erlang:registered()) of
+        true ->
+            erlang:unregister(?MODULE);
+        false ->
+            ok
+    end,
+    erlang:register(?MODULE, self()),
     InitialState = Servers,
     case ?flag_set(?USE_RELOADER, Flags) of
         false ->
