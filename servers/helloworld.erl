@@ -87,4 +87,4 @@ handle_pic(_, _) ->
     Binary.
 
 handle_wildcard(_Data, _Parameters) ->
-    <<"aa 404: i dont know what youre saying">>.
+    <<"404: i dont know what youre saying">>.

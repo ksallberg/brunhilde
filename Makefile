@@ -16,7 +16,7 @@ clean:
 	rm -rf log/*.log
 .PHONY: clean
 
-servers:
+servers: build
 	erlc -o priv/ servers/*.erl -pa _build/default/lib/rest_server/ebin/
 .PHONY: servers
 

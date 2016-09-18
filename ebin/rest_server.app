@@ -10,7 +10,8 @@
                   , tcp_supervisor
                   , stats_supervisor
                   , stats_server
-                  , tracker_server]}
+                  , tracker_server
+                  , reloader_server]}
  , {registered, [ tcp_supervisor
                 , tracker_server]}
  , {applications, [kernel, stdlib]}
