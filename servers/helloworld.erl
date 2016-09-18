@@ -22,6 +22,7 @@ routes() ->
     , {html, get, "/helloworld2.html",         fun handle_html2/2}
     , {xml,  get, "/helloworld/xml/",          fun handle_xml/2}
     , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/2}
+    , {html, get, "/helloworld/template",      fun handle_template/2}
     , {'*',                                    fun handle_wildcard/2}].
 
 handle_hello(_Data, Parameters) ->
@@ -72,6 +73,14 @@ tree() ->
                 namespace=#xmlNamespace{default=Ns1},
                 attributes=[#xmlAttribute{name=xmlns, value=Ns1}],
                 content=Content}.
+
+handle_template(_, _) ->
+    {ok, Module} = erlydtl:compile_file("static/example_template.dtl",
+                                        template_name),
+    {ok, Binary} = Module:render([ {thursday, true}
+                                 , {day, true}
+                                 ]),
+    Binary.
 
 handle_pic(_, _) ->
     {ok, Binary} = file:read_file("static/brunhilde.jpg"),

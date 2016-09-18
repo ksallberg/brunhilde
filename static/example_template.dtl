@@ -1,0 +1,13 @@
+<html>
+  <body>
+    <div class="panel-heading">
+      <h4>Testing django template language integration</h4>
+    </div>
+
+    <div class="panel-body">
+      {{thursday}}
+      </br>
+      {%if day %}Hello!{% endif %}
+    </div>
+  </body>
+</html>

@@ -1,18 +1,27 @@
 <html>
   <head>
     <title>Brunhilde statistics</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script
+        src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js">
+    </script>
     <script type="text/javascript">
-          $.getJSON("http://localhost:8080/",
-                    handleData);
-
           function handleData(data) {
               for (i = 0; i < data.stats.length; i ++) {
-                  console.log(data.stats[i]);
+                  $("body").append(data.stats[i].server_name + ": ");
+                  $("body").append(data.stats[i].total_connections_handled
+                                   + "</br>");
               }
           }
+          $(document).ready(function() {
+              $.getJSON("http://localhost:8080/",
+                        handleData);
+          });
     </script>
   </head>
   <body>
+    <div id="container">
+    <h1>Statistics from REST call</h1>
+    <p>Recorded amount of connections per server:</p>
+    </div>
   </body>
 </html>

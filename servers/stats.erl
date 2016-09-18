@@ -19,8 +19,8 @@ routes() ->
 handle_stats(_Data, _Parameters) ->
     Stats = tracker_server:get_stats(),
     FormatFun = fun({Name, Connections}) ->
-                        #{<<"server name">> => atom_to_binary(Name, utf8),
-                          <<"total connections handled">> => Connections}
+                        #{<<"server_name">> => atom_to_binary(Name, utf8),
+                          <<"total_connections_handled">> => Connections}
                 end,
     #{<<"stats">> => lists:map(FormatFun, Stats)}.
 
