@@ -77,7 +77,7 @@ tree() ->
 handle_template(_, _) ->
     {ok, Module} = erlydtl:compile_file("static/example_template.dtl",
                                         template_name),
-    {ok, Binary} = Module:render([ {thursday, true}
+    {ok, Binary} = Module:render([ {thursday, <<"this is a day">>}
                                  , {day, true}
                                  ]),
     Binary.
