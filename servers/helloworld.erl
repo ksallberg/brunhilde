@@ -23,6 +23,7 @@ routes() ->
     , {xml,  get, "/helloworld/xml/",          fun handle_xml/2}
     , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/2}
     , {html, get, "/helloworld/template",      fun handle_template/2}
+    , {file, get, "/favicon.ico",              fun handle_icon/2}
     , {'*',                                    fun handle_wildcard/2}].
 
 handle_hello(_Data, Parameters) ->
@@ -84,6 +85,10 @@ handle_template(_, _) ->
 
 handle_pic(_, _) ->
     {ok, Binary} = file:read_file("static/brunhilde.jpg"),
+    Binary.
+
+handle_icon(_, _) ->
+    {ok, Binary} = file:read_file("static/favicon.ico"),
     Binary.
 
 handle_wildcard(_Data, _Parameters) ->

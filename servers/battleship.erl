@@ -35,6 +35,7 @@ routes() ->
     , {json, get,  "/battleship/radar_all/", fun handle_radar_all/2}
     , {json, post, "/battleship/reset/",     fun handle_reset/2}
     , {json, get,  "/battleship/info/",      fun handle_info/2}
+    , {file, get,  "/favicon.ico",           fun handle_icon/2}
     , {'*',                                  fun handle_wildcard/2}].
 
 %-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
@@ -129,11 +130,14 @@ handle_info(_Json, _Parameters) ->
     #{<<"info_text">> =>
       <<"This is a battleship game to show how to use erlrest">>}.
 
+handle_icon(_, _) ->
+    {ok, Binary} = file:read_file("static/favicon.ico"),
+    Binary.
+
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
 handle_wildcard(_Json, _Parameters) ->
     <<"no route matching">>.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% Battleship helpers %%
