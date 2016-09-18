@@ -23,54 +23,57 @@
 %% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rest_server_application).
+-module(reloader_server).
+
 -author('kristian@purestyle.se').
 
--behaviour(application).
--export([ start/2
-        , stop/1
-        , do_start/4]).
+-behaviour(gen_server).
 
 -include("include/erlrest.hrl").
 
--spec start(any(), term()) -> {ok, pid()}
-                           |  {ok, pid(), term()}
-                           |  {error, any()}.
-start(_Type, _Args) ->
-    {ok, [#{collect_stats  := CollectStats,
-            start_observer := StartObserver,
-            start_debugger := StartDebugger,
-            use_reloader   := UseReloader,
-            servers        := Servers}]} = file:consult("brunhilde.conf"),
-    case StartDebugger of
+-export([start_link/2]).
+-export([init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+         terminate/2,
+         code_change/3]).
+
+-define(TIMEOUT, 60000).
+
+start_link(Servers, Flags) ->
+    gen_server:start_link(?MODULE, [Servers, Flags], []).
+
+init([Servers, Flags]) ->
+    InitialState = Servers,
+    case ?flag_set(?USE_RELOADER, Flags) of
         false ->
-            do_start( CollectStats
-                    , StartObserver
-                    , UseReloader
-                    , Servers);
+            ok;
         true ->
-            debugger:quick(?MODULE, do_start,
-                           [CollectStats, StartObserver, Servers])
-    end.
+            erlang:send_after(?TIMEOUT, self(), trigger)
+    end,
+    {ok, InitialState}.
 
-do_start( CollectStats
-        , StartObserver
-        , UseReloader
-        , Servers) ->
-    lager:start(),
-    Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
-                     , {StartObserver, ?START_OBSERVER}
-                     , {UseReloader,   ?USE_RELOADER}
-                     ]),
-    rest_server_supervisor:start_link(Servers, Flags).
+handle_cast(_, State) ->
+    {noreply, State}.
 
--spec stop(any()) -> ok.
-stop(_State) ->
+handle_call(_, _From, State) ->
+    {noreply, State}.
+
+handle_info(trigger, Servers = State) ->
+    %% Reload server business logic
+    lager:log(info, self(), "reloader_server: Reloading servers.", []),
+    F = fun(#{name := ServerName}) ->
+                ServerNameStr = ?a2l(ServerName),
+                BeamFile = "priv/" ++ ServerNameStr,
+                code:load_abs(BeamFile)
+        end,
+    lists:foreach(F, Servers),
+    erlang:send_after(?TIMEOUT, self(), trigger),
+    {noreply, State}.
+
+terminate(_Reason, _) ->
     ok.
 
-mk_flags([]) ->
-    0;
-mk_flags([{true, Flag}|Rest]) ->
-    Flag bor mk_flags(Rest);
-mk_flags([{false, _}|Rest]) ->
-    mk_flags(Rest).
+code_change(_OldVsn, StateData, _Extra) ->
+    {ok, StateData}.

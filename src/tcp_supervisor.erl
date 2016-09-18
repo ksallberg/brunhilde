@@ -33,7 +33,9 @@
          start_socket/3]).
 
 start_link(Servers, Flags) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
+    supervisor:start_link( {local, ?MODULE}
+                         , ?MODULE
+                         , [Servers, Flags]).
 
 init([Servers, Flags]) ->
     Servers1 = [{Server, Flags} || Server <- Servers],

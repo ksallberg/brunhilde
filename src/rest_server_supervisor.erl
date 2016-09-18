@@ -42,7 +42,6 @@ start_link(Servers, Flags) ->
     end,
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
-
 init([Servers, Flags]) ->
     TrackerSup = #{id       => rest_tracker_supervisor,
                    start    => {tracker_server,
@@ -50,8 +49,17 @@ init([Servers, Flags]) ->
                                 []},
                    restart  => permanent,
                    shutdown => 1000,
-                   type     => supervisor,
+                   type     => worker,
                    modules  => [tracker_server]},
+
+    ReloaderSup = #{id       => rest_reloader_supervisor,
+                    start    => {reloader_server,
+                                 start_link,
+                                 [Servers, Flags]},
+                    restart  => permanent,
+                    shutdown => 1000,
+                    type     => worker,
+                    modules  => [reloader_server]},
 
     StatsSup = #{id       => rest_stats_supervisor,
                  start    => {stats_supervisor,
@@ -75,4 +83,7 @@ init([Servers, Flags]) ->
                  intensity => 10,
                  preiod    => 60},
 
-    {ok, {SupFlags, [TrackerSup, StatsSup, TCPSup]}}.
+    {ok, {SupFlags, [ TrackerSup
+                    , StatsSup
+                    , TCPSup
+                    , ReloaderSup]}}.
