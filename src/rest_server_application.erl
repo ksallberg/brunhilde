@@ -42,6 +42,11 @@ start(_Type, _Args) ->
             start_debugger := StartDebugger,
             use_reloader   := UseReloader,
             servers        := Servers}]} = file:consult("brunhilde.conf"),
+    %% CollectStats = false,
+    %% StartObserver = false,
+    %% StartDebugger = false,
+    %% UseReloader = false,
+    %% Servers = [],
     case StartDebugger of
         false ->
             do_start( CollectStats
@@ -50,7 +55,10 @@ start(_Type, _Args) ->
                     , Servers);
         true ->
             debugger:quick(?MODULE, do_start,
-                           [CollectStats, StartObserver, Servers])
+                           [ CollectStats
+                           , StartObserver
+                           , UseReloader
+                           , Servers])
     end.
 
 do_start( CollectStats

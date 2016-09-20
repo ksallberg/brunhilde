@@ -67,7 +67,7 @@ init([Servers, Flags]) ->
                               [Servers]},
                  restart  => permanent,
                  shutdown => 1000,
-                 type     => worker,
+                 type     => supervisor,
                  modules  => [stats_supervisor]},
 
     TCPSup = #{id       => rest_tcp_supervisor,

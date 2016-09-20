@@ -125,9 +125,13 @@ respond(#state{socket = S, data = Data0, route = Route,
     -> {stop, normal, state()} | {noreply, state(), infinity}.
 handle_cast(accept, S = #state{socket=ListenSocket,
                                server=Server, flags=Flags}) ->
-    {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
-    tcp_supervisor:start_socket(ListenSocket, Server, Flags),
-    {noreply, S#state{socket=AcceptSocket}};
+    gen_tcp:controlling_process(ListenSocket, self()),
+    ?liof("LISTENSOCK: ~p~n", [ListenSocket]),
+    case gen_tcp:accept(ListenSocket) of
+        {ok, AcceptSocket} ->
+            tcp_supervisor:start_socket(ListenSocket, Server, Flags),
+            {noreply, S#state{socket=AcceptSocket}}
+    end;
 
 %% Handle the actual client connecting and requesting something
 handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->

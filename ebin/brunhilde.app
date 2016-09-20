@@ -1,7 +1,7 @@
-{application, rest_server,
+{application, brunhilde,
  [ {description,  "Rest server"}
  , {vsn,          "1.2"}
- , {id,           "rest_server"}
+ , {id,           "brunhilde"}
  , {modules,      [ http_parser
                   , rest_handler
                   , rest_server_application
@@ -11,7 +11,8 @@
                   , stats_supervisor
                   , stats_server
                   , tracker_server
-                  , reloader_server]}
+                  , reloader_server
+                  , br_ext]}
  , {registered, [ tcp_supervisor
                 , tracker_server]}
  , {applications, [kernel, stdlib]}

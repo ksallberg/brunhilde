@@ -8,6 +8,13 @@ start: servers
 
 .PHONY: start
 
+# Demo of how to embed brunhilde in another application
+start_external: servers
+	erlc -o priv/ test/external.erl -pa _build/default/lib/rest_server/ebin/
+	erlc -o priv/ test/external_app.erl -pa _build/default/lib/rest_server/ebin/
+	erl -boot start_sasl -pa _build/default/lib/*/ebin \
+            -pa priv -eval "application:start(external_app)" -config ebin/sys.config
+
 clean:
 	rm -rf _build
 	rm -f ebin/*.beam

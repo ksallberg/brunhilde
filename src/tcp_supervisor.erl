@@ -28,9 +28,10 @@
 
 -include("include/erlrest.hrl").
 
--export([start_link/2,
-         init/1,
-         start_socket/3]).
+-export([ start_link/2
+        , init/1
+        , start_server/1
+        , start_socket/3]).
 
 start_link(Servers, Flags) ->
     supervisor:start_link( {local, ?MODULE}
@@ -76,6 +77,7 @@ start_server({#{name     := Name,
     spawn_link(SpawnFun).
 
 start_socket(ListenSocket, Server, Flags) ->
+    gen_tcp:controlling_process(ListenSocket, self()),
     supervisor:start_child(?MODULE, [ListenSocket, Server, Flags]).
 
 emit_terminal_box(Port) ->
