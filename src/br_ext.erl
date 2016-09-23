@@ -23,6 +23,8 @@
 %% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
+%% External API for using brunhilde from other OTP applications.
+%% Will put processes in the brunhilde application (which needs to be started).
 -module(br_ext).
 
 -export([add_server/1]).

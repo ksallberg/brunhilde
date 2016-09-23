@@ -3,9 +3,9 @@
  , {vsn,          "1.2"}
  , {id,           "brunhilde"}
  , {modules,      [ http_parser
-                  , rest_handler
-                  , rest_server_application
-                  , rest_server_supervisor
+                  , http_handler
+                  , brunhilde_application
+                  , brunhilde_supervisor
                   , tcp_server
                   , tcp_supervisor
                   , stats_supervisor
@@ -16,7 +16,7 @@
  , {registered, [ tcp_supervisor
                 , tracker_server]}
  , {applications, [kernel, stdlib]}
- , {mod, {rest_server_application, []}}
+ , {mod, {brunhilde_application, []}}
  , {lager,
      [ {log_root, "log/"}
      , {handlers, [ {lager_console_backend, info}

@@ -23,7 +23,9 @@
 %% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rest_handler).
+%% Behaviour of server business logic implementations
+
+-module(http_handler).
 
 -callback init() -> atom().
 

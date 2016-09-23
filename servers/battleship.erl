@@ -3,7 +3,7 @@
 -export([ init/0
         , routes/0]).
 
--behaviour(rest_handler).
+-behaviour(http_handler).
 
 %% tip: there is an application wide ets table
 %% called erlrest_global_memory that might come in handy here
@@ -17,7 +17,7 @@
           shots       :: [integer()]
         }).
 
--define(DB, erlrest_battleship_memory).
+-define(DB, battleship_memory).
 
 %% Called upon the start of the server
 -spec init() -> atom().

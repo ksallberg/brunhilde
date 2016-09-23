@@ -23,7 +23,7 @@
 %% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rest_server_application).
+-module(brunhilde_application).
 -author('kristian@purestyle.se').
 
 -behaviour(application).
@@ -31,22 +31,27 @@
         , stop/1
         , do_start/4]).
 
--include("include/erlrest.hrl").
+-include("include/brunhilde.hrl").
 
 -spec start(any(), term()) -> {ok, pid()}
                            |  {ok, pid(), term()}
                            |  {error, any()}.
 start(_Type, _Args) ->
-    {ok, [#{collect_stats  := CollectStats,
-            start_observer := StartObserver,
-            start_debugger := StartDebugger,
-            use_reloader   := UseReloader,
-            servers        := Servers}]} = file:consult("brunhilde.conf"),
-    %% CollectStats = false,
-    %% StartObserver = false,
-    %% StartDebugger = false,
-    %% UseReloader = false,
-    %% Servers = [],
+    case file:consult("brunhilde.conf") of
+        {error, Reason} ->
+            ?liof("Could not load brunhilde.conf: ~p~n", [Reason]),
+            CollectStats  = false,
+            StartObserver = false,
+            StartDebugger = false,
+            UseReloader   = false,
+            Servers       = [];
+        {ok, [#{collect_stats  := CollectStats,
+                start_observer := StartObserver,
+                start_debugger := StartDebugger,
+                use_reloader   := UseReloader,
+                servers        := Servers}]} ->
+            ok
+    end,
     case StartDebugger of
         false ->
             do_start( CollectStats
@@ -70,7 +75,7 @@ do_start( CollectStats
                      , {StartObserver, ?START_OBSERVER}
                      , {UseReloader,   ?USE_RELOADER}
                      ]),
-    rest_server_supervisor:start_link(Servers, Flags).
+    brunhilde_supervisor:start_link(Servers, Flags).
 
 -spec stop(any()) -> ok.
 stop(_State) ->

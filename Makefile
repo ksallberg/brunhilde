@@ -3,17 +3,10 @@ build:
 
 start: servers
 	erl -boot start_sasl -pa _build/default/lib/*/ebin \
-            -pa priv -eval "application:start(rest_server)" \
+            -pa priv -eval "application:start(brunhilde)" \
             -config ebin/sys.config
 
 .PHONY: start
-
-# Demo of how to embed brunhilde in another application
-start_external: servers
-	erlc -o priv/ test/external.erl -pa _build/default/lib/rest_server/ebin/
-	erlc -o priv/ test/external_app.erl -pa _build/default/lib/rest_server/ebin/
-	erl -boot start_sasl -pa _build/default/lib/*/ebin \
-            -pa priv -eval "application:start(external_app)" -config ebin/sys.config
 
 clean:
 	rm -rf _build
@@ -24,12 +17,12 @@ clean:
 .PHONY: clean
 
 servers: build
-	erlc -o priv/ servers/*.erl -pa _build/default/lib/rest_server/ebin/
+	erlc -o priv/ servers/*.erl -pa _build/default/lib/brunhilde/ebin/
 .PHONY: servers
 
 # if no plt file:
 # dialyzer --build_plt --apps mnesia
-# dialyzer --add_to_plt ./_build/default/lib/rest_server/
+# dialyzer --add_to_plt ./_build/default/lib/brunhilde/
 dialyzer:
 	dialyzer --src src/
 .PHONY: dialyzer

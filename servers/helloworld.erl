@@ -3,9 +3,9 @@
 -export([ init/0
         , routes/0]).
 
--behaviour(rest_handler).
+-behaviour(http_handler).
 
--include("include/erlrest.hrl").
+-include("include/brunhilde.hrl").
 
 -include_lib("xmerl/include/xmerl.hrl").
 
