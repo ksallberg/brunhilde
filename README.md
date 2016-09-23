@@ -18,9 +18,13 @@ performance or be used in production.
 
 #Usage:
 
+To start brunhilde standalone, do:
 ```
 make build start
 ```
+
+To embed brunhilde in another OTP application, see:
+[https://github.com/ksallberg/brunhilde_ext](https://github.com/ksallberg/brunhilde_ext)
 
 #Dialyzer:
 make dialyzer (requires existing PLT)
