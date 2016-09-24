@@ -178,8 +178,7 @@ handle_info({tcp, Sock, Bin}, #state{socket=Sock} = StateData) ->
     ?MODULE:handle_cast({data, Bin}, StateData);
 
 handle_info({tcp_closed, Socket},
-            #state{socket=Socket, addr=Addr} = StateData) ->
-    error_logger:info_msg("~p Client ~p disconnected. ~n", [self(), Addr]),
+            #state{socket=Socket} = StateData) ->
     {stop, normal, StateData};
 
 handle_info(_Info, StateData) ->
