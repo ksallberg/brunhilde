@@ -91,7 +91,7 @@ respond(#state{socket = S, data = Data0, route = Route,
                          {'*', WildcardFun} ->
                              WildcardFun(Data, Parameters)
                      end,
-            ok     = gen_tcp:send(S, http_parser:response(Answer));
+            ok = gen_tcp:send(S, http_parser:response(Answer, ""));
         [{json, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
@@ -100,8 +100,16 @@ respond(#state{socket = S, data = Data0, route = Route,
                              JsonObj = jsx:decode(?l2b(Data), [return_maps]),
                              HandlerFun(JsonObj, Parameters)
                      end,
-            JsonReturn = jsx:encode(Answer),
-            ok         = gen_tcp:send(S, http_parser:response(JsonReturn));
+            {JsonReturn, ExtraHeaders} =
+                case Answer of
+                    #{response      := Response,
+                      extra_headers := ExtraHeaders0} ->
+                        {jsx:encode(Response), ExtraHeaders0};
+                    _ ->
+                        {jsx:encode(Answer), ""}
+                end,
+            ok = gen_tcp:send(S, http_parser:response(JsonReturn,
+                                                      ExtraHeaders));
         [{xml, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
@@ -110,16 +118,36 @@ respond(#state{socket = S, data = Data0, route = Route,
                              {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
                              HandlerFun(XmlObj, Parameters)
                      end,
-            XmlReturn = xmerl:export_simple(Answer, xmerl_xml),
-            ok        = gen_tcp:send(S, http_parser:response(XmlReturn));
+            {XmlReturn, ExtraHeaders} =
+                case Answer of
+                    #{response      := Response,
+                      extra_headers := ExtraHeaders0} ->
+                        {xmerl:export_simple(Response, xmerl_xml),
+                         ExtraHeaders0};
+                    _ ->
+                        {xmerl:export_simple(Answer, xmerl_xml), ""}
+                end,
+            ok = gen_tcp:send(S, http_parser:response(XmlReturn,
+                                                      ExtraHeaders));
         [{html, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters),
-            ok     = gen_tcp:send(S, http_parser:response(Answer));
+            ok     = handle_file_html(Answer, S);
         [{file, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters),
-            ok     = gen_tcp:send(S, http_parser:response(Answer))
+            ok     = handle_file_html(Answer, S)
     end,
     gen_tcp:close(S).
+
+handle_file_html(Answer, S) ->
+    {Return, ExtraHeaders} =
+        case Answer of
+            #{response      := Response,
+              extra_headers := ExtraHeaders0} ->
+                {Response, ExtraHeaders0};
+            _ ->
+                {Answer, ""}
+        end,
+    gen_tcp:send(S, http_parser:response(Return, ExtraHeaders)).
 
 -spec handle_cast({data, string()} | timeout | {socket_ready, port()}, state())
     -> {stop, normal, state()} | {noreply, state(), infinity}.

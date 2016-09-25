@@ -24,7 +24,7 @@
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -module(http_parser).
--export([parse_request/1, response/1]).
+-export([parse_request/1, response/2]).
 
 -type method() :: 'delete' | 'get' | 'post' | 'put'.
 -type http_version() :: 'v10' | 'v11'.
@@ -121,7 +121,8 @@ parameter(Ls) ->
     {{Name, Content}, Rest2}.
 
 %% for now always send access-control-allow
--spec response(string()) -> string().
-response(Body) ->
+-spec response(string(), string()) -> string().
+response(Body, ExtraHeaders) ->
     "HTTP/1.1 200 OK\r\n" ++
-    "Access-Control-Allow-Origin: *\r\n"++ "\r\n" ++ Body.
+    "Access-Control-Allow-Origin: *\r\n" ++
+    ExtraHeaders ++ "\r\n" ++ Body.
