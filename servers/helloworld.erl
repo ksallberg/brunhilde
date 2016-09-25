@@ -16,25 +16,27 @@ init() ->
     ok.
 
 routes() ->
-    [ {json, get, "/helloworld/hello/",        fun handle_hello/2}
-    , {json, get, "/error",                    fun handle_error/2}
-    , {html, get, "/helloworld.html",          fun handle_html/2}
-    , {html, get, "/helloworld2.html",         fun handle_html2/2}
-    , {xml,  get, "/helloworld/xml/",          fun handle_xml/2}
-    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/2}
-    , {html, get, "/helloworld/template",      fun handle_template/2}
-    , {file, get, "/favicon.ico",              fun handle_icon/2}
-    , {'*',                                    fun handle_wildcard/2}].
+    [ {json, get, "/helloworld/hello/",        fun handle_hello/3}
+    , {json, get, "/error",                    fun handle_error/3}
+    , {html, get, "/helloworld.html",          fun handle_html/3}
+    , {html, get, "/helloworld2.html",         fun handle_html2/3}
+    , {xml,  get, "/helloworld/xml/",          fun handle_xml/3}
+    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/3}
+    , {html, get, "/helloworld/template",      fun handle_template/3}
+    , {html, get, "/setcookie",                fun set_cookie/3}
+    , {html, get, "/hascookie",                fun has_cookie/3}
+    , {file, get, "/favicon.ico",              fun handle_icon/3}
+    , {'*',                                    fun handle_wildcard/3}].
 
-handle_hello(_Data, Parameters) ->
+handle_hello(_Data, Parameters, _Headers) ->
     lager:log(info, self(), "Someone asked for ~p", [Parameters]),
     #{<<"hello">> => <<"hello2u">>}.
 
-handle_error(_Data, _Parameters) ->
+handle_error(_Data, _Parameters, _Headers) ->
     lager:log(error, self(), "some error!"),
     #{<<"hello">> => <<"error">>}.
 
-handle_html(_Data, _Parameters) ->
+handle_html(_Data, _Parameters, _Headers) ->
     Html = "<html>"
            "  <head>"
            "     <title>Hello!</title>"
@@ -46,7 +48,7 @@ handle_html(_Data, _Parameters) ->
            "</html>",
     ?l2b(Html).
 
-handle_html2(_Data, _Parameters) ->
+handle_html2(_Data, _Parameters, _Headers) ->
     Html = "<html>"
            "  <head>"
            "     <title>Hello!</title>"
@@ -60,7 +62,7 @@ handle_html2(_Data, _Parameters) ->
            "</html>",
     ?l2b(Html).
 
-handle_xml(_Data, _Parameters) ->
+handle_xml(_Data, _Parameters, _Headers) ->
     [tree()].
 
 %% tree is the property of:
@@ -75,7 +77,7 @@ tree() ->
                 attributes=[#xmlAttribute{name=xmlns, value=Ns1}],
                 content=Content}.
 
-handle_template(_, _) ->
+handle_template(_, _, _Headers) ->
     {ok, Module} = erlydtl:compile_file("static/example_template.dtl",
                                         template_name),
     {ok, Binary} = Module:render([ {thursday, <<"this is a day">>}
@@ -83,13 +85,28 @@ handle_template(_, _) ->
                                  ]),
     Binary.
 
-handle_pic(_, _) ->
+handle_pic(_, _, _) ->
     {ok, Binary} = file:read_file("static/brunhilde.jpg"),
     Binary.
 
-handle_icon(_, _) ->
+handle_icon(_, _, _) ->
     {ok, Binary} = file:read_file("static/favicon.ico"),
     Binary.
 
-handle_wildcard(_Data, _Parameters) ->
+set_cookie(_Data, _Parameters, _Headers) ->
+    #{response      => <<"Cookie set!">>,
+      extra_headers => "Set-Cookie: theme=dark\r\n"
+                       "Set-Cookie: user=alice\r\n"}.
+
+has_cookie(_Data, _Parameters, Headers) ->
+    Cookies = [Cookies || {"Cookie", Cookies} <- Headers],
+    Return = case Cookies of
+                 [] ->
+                     <<"No cookie set.">>;
+                 _ ->
+                     ?l2b("Following cookies are set: " ++ Cookies)
+             end,
+    Return.
+
+handle_wildcard(_Data, _Parameters, _Headers) ->
     <<"Error 404: i dont know what youre saying">>.

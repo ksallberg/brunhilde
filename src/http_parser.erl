@@ -85,14 +85,18 @@ http_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
 
 % recursively pick out all headers until
 % the stop "[13,10]" CRLF
--spec headers(string()) -> {[string()], string()}.
+-spec headers(string()) -> {[{string(), string()}], string()}.
 
 headers([13, 10 | R0]) ->
     {[],R0};
 headers(R0) ->
-    {Header, R1} = header(R0),
+    {Header0, R1} = header(R0),
+    NotColon = fun(Input) -> Input /= $: end,
+    HeaderKey   = lists:takewhile(NotColon, Header0),
+    %% Drop "xxxx: "
+    HeaderValue = tl(tl(lists:dropwhile(NotColon, Header0))),
     {Rest,   R2} = headers(R1),
-    {[Header|Rest], R2}.
+    {[{HeaderKey, HeaderValue}|Rest], R2}.
 
 % take everything until [13,10]
 % return that, and the rest of the list

@@ -49,6 +49,7 @@
                , body_length :: integer()              %% total body length
                , route       :: string()               %% route expressed
                                                        %% as string()
+               , headers     :: [{string(), string()}] %% HTTP headers
                , parameters  :: [{string(), string()}] %% GET parameters
                , method      :: atom()                 %% method expressed as
                                                        %% atom(), get, post
@@ -75,7 +76,7 @@ init([Socket, Server, Flags]) ->
 
 respond(#state{socket = S, data = Data0, route = Route,
                method = Method, parameters = Parameters,
-               server = #{name := ServName}}) ->
+               headers = Headers, server = #{name := ServName}}) ->
     Routes = erlang:apply(ServName, routes, []),
     Data   = case Data0 of
                  [] -> no_data;
@@ -89,16 +90,16 @@ respond(#state{socket = S, data = Data0, route = Route,
                          false ->
                              <<"404 error">>;
                          {'*', WildcardFun} ->
-                             WildcardFun(Data, Parameters)
+                             WildcardFun(Data, Parameters, Headers)
                      end,
             ok = gen_tcp:send(S, http_parser:response(Answer, ""));
         [{json, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
-                             HandlerFun(no_data, Parameters);
+                             HandlerFun(no_data, Parameters, Headers);
                          _ ->
                              JsonObj = jsx:decode(?l2b(Data), [return_maps]),
-                             HandlerFun(JsonObj, Parameters)
+                             HandlerFun(JsonObj, Parameters, Headers)
                      end,
             {JsonReturn, ExtraHeaders} =
                 case Answer of
@@ -113,10 +114,10 @@ respond(#state{socket = S, data = Data0, route = Route,
         [{xml, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
-                             HandlerFun(no_data, Parameters);
+                             HandlerFun(no_data, Parameters, Headers);
                          _ ->
                              {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
-                             HandlerFun(XmlObj, Parameters)
+                             HandlerFun(XmlObj, Parameters, Headers)
                      end,
             {XmlReturn, ExtraHeaders} =
                 case Answer of
@@ -130,10 +131,10 @@ respond(#state{socket = S, data = Data0, route = Route,
             ok = gen_tcp:send(S, http_parser:response(XmlReturn,
                                                       ExtraHeaders));
         [{html, HandlerFun}] ->
-            Answer = HandlerFun(Data, Parameters),
+            Answer = HandlerFun(Data, Parameters, Headers),
             ok     = handle_file_html(Answer, S);
         [{file, HandlerFun}] ->
-            Answer = HandlerFun(Data, Parameters),
+            Answer = HandlerFun(Data, Parameters, Headers),
             ok     = handle_file_html(Answer, S)
     end,
     gen_tcp:close(S).
@@ -176,6 +177,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
                     State#state{data        = DBuf ++ Body,
                                 body_length = NewBL,
                                 route       = NewRoute,
+                                headers     = Headers,
                                 parameters  = Params,
                                 method      = Method};
                 _ ->
@@ -239,12 +241,10 @@ terminate(_Reason, #state{socket = Socket,
 code_change(_OldVsn, StateData, _Extra) ->
     {ok, StateData}.
 
--spec get_content_length([string()]) -> integer().
+-spec get_content_length([{string(), string()}]) -> integer().
 get_content_length(Headers) ->
-    case [Len || [Desc, Len] <- [string:tokens(Header, " ")
-              || Header <- Headers], Desc=="Content-Length:"] of
-        []     -> 0;
-        ConLen -> A = lists:nth(1, ConLen),
-                      {Num, _} = string:to_integer(A),
-                      Num
+    case [Len || {"Content-Length", Len} <- Headers] of
+        []       -> 0;
+        [ConLen] -> {Int, _} = string:to_integer(ConLen),
+                    Int
     end.

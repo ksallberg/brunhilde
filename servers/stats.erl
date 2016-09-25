@@ -12,12 +12,12 @@ init() ->
     ok.
 
 routes() ->
-    [ {json, get, "/",            fun handle_stats/2}
-    , {file, get, "/stats.html",  fun handle_file/2}
-    , {file, get, "/favicon.ico", fun handle_icon/2}
-    , {'*',                       fun handle_wildcard/2}].
+    [ {json, get, "/",            fun handle_stats/3}
+    , {file, get, "/stats.html",  fun handle_file/3}
+    , {file, get, "/favicon.ico", fun handle_icon/3}
+    , {'*',                       fun handle_wildcard/3}].
 
-handle_stats(_Data, _Parameters) ->
+handle_stats(_Data, _Parameters, _Headers) ->
     Stats = tracker_server:get_stats(),
     FormatFun = fun({Name, Connections}) ->
                         #{<<"server_name">> => atom_to_binary(Name, utf8),
@@ -25,13 +25,13 @@ handle_stats(_Data, _Parameters) ->
                 end,
     #{<<"stats">> => lists:map(FormatFun, Stats)}.
 
-handle_file(_, _) ->
+handle_file(_, _, _Headers) ->
     {ok, Binary} = file:read_file("static/stats.html"),
     Binary.
 
-handle_icon(_, _) ->
+handle_icon(_, _, _Headers) ->
     {ok, Binary} = file:read_file("static/favicon.ico"),
     Binary.
 
-handle_wildcard(_Data, _Parameters) ->
+handle_wildcard(_Data, _Parameters, _Headers) ->
     <<"404">>.
