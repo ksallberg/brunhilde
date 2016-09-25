@@ -1,6 +1,6 @@
 {application, brunhilde,
- [ {description,  "Brunhilde minimal HTTP server"}
- , {vsn,          "1.4"}
+ [ {description,  "Brunhilde is a minimal HTTP server."}
+ , {vsn,          "1.5.0"}
  , {id,           "brunhilde"}
  , {modules,      [ http_parser
                   , http_handler
@@ -17,6 +17,8 @@
                 , tracker_server]}
  , {applications, [kernel, stdlib]}
  , {mod, {brunhilde_application, []}}
+ , {maintainers, ["Kristian Sallberg"]}
+ , {licenses, ["BSD-2-Clause"]}
  , {lager,
      [ {log_root, "log/"}
      , {handlers, [ {lager_console_backend, info}
@@ -26,5 +28,16 @@
      , {colored, true}
      ]
    }
+ , {files, [ "LICENSE"
+           , "README.md"
+           , "src"
+           , "test"
+           , "include"
+           , "brunhilde.conf"
+           , "Makefile"
+           , "rebar.config"
+           , "servers"
+           , "static"
+           ]}
  ]
 }.
