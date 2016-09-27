@@ -24,7 +24,9 @@
 %% OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -module(http_parser).
--export([parse_request/1, response/2]).
+-export([ parse_request/1
+        , response/2
+        , parameters/1]).
 
 -type method() :: 'delete' | 'get' | 'post' | 'put'.
 -type http_version() :: 'v10' | 'v11'.
