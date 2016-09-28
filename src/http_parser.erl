@@ -26,7 +26,8 @@
 -module(http_parser).
 -export([ parse_request/1
         , response/2
-        , parameters/1]).
+        , parameters/1
+        , cookies/1]).
 
 -type method() :: 'delete' | 'get' | 'post' | 'put'.
 -type http_version() :: 'v10' | 'v11'.
@@ -125,6 +126,13 @@ parameter(Ls) ->
                                        lists:nthtail(1,Rest)
                                       ), % drop = char
     {{Name, Content}, Rest2}.
+
+cookies(CookieString) ->
+    Cs = re:split(CookieString, "; ", [{return, list}]),
+    lists:map(fun(X) ->
+                      [A, B] = re:split(X, "=", [{return, list}]),
+                      {A, B}
+              end, Cs).
 
 %% for now always send access-control-allow
 -spec response(string(), string()) -> string().
