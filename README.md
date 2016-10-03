@@ -24,7 +24,11 @@ make build start
 ```
 
 To embed brunhilde in another OTP application, see:
-[https://github.com/ksallberg/brunhilde_ext](https://github.com/ksallberg/brunhilde_ext)
+[brunhilde_ext](https://github.com/ksallberg/brunhilde_ext).
+
+For an example of a small (but covering POST, GET, redirects, etc), see:
+[musiklistan](https://github.com/ksallberg/musiklistan).
+
 
 #Dialyzer:
 make dialyzer (requires existing PLT)
