@@ -137,7 +137,7 @@ cookies(CookieString) ->
 %% for now always send access-control-allow
 -spec response(string(), string(), string()) -> string().
 response(Body0, ExtraHeaders, ReturnCode) ->
-    Body = case Body0 of
+    Body = case ReturnCode of
                "307 TEMPORARY REDIRECT" ->
                    "";
                _ ->
