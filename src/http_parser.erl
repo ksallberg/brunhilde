@@ -25,7 +25,7 @@
 
 -module(http_parser).
 -export([ parse_request/1
-        , response/2
+        , response/3
         , parameters/1
         , cookies/1]).
 
@@ -135,8 +135,8 @@ cookies(CookieString) ->
               end, Cs).
 
 %% for now always send access-control-allow
--spec response(string(), string()) -> string().
-response(Body, ExtraHeaders) ->
-    "HTTP/1.1 200 OK\r\n" ++
+-spec response(string(), string(), string()) -> string().
+response(Body, ExtraHeaders, ReturnCode) ->
+    "HTTP/1.1 " ++ ReturnCode ++ "\r\n" ++
     "Access-Control-Allow-Origin: *\r\n" ++
     ExtraHeaders ++ "\r\n" ++ Body.

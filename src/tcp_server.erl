@@ -58,7 +58,7 @@
 -type state() :: #state{}.
 
 -define(TIMEOUT, infinity).
-
+-define(OKCODE, "200 OK").
 -define(SOCK(Msg), {tcp, _Port, Msg}).
 
 start_link(ListenSocket, Server, Flags) ->
@@ -92,7 +92,9 @@ respond(#state{socket = S, data = Data0, route = Route,
                          {'*', WildcardFun} ->
                              WildcardFun(Data, Parameters, Headers)
                      end,
-            ok = gen_tcp:send(S, http_parser:response(Answer, ""));
+            ok = gen_tcp:send(S, http_parser:response(Answer,
+                                                      "",
+                                                      "404 NOT FOUND"));
         [{json, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
@@ -101,16 +103,21 @@ respond(#state{socket = S, data = Data0, route = Route,
                              JsonObj = jsx:decode(?l2b(Data), [return_maps]),
                              HandlerFun(JsonObj, Parameters, Headers)
                      end,
-            {JsonReturn, ExtraHeaders} =
+            {JsonReturn, ExtraHeaders, ReturnCode} =
                 case Answer of
                     #{response      := Response,
+                      extra_headers := ExtraHeaders0,
+                      return_code   := ReturnCode0} ->
+                        {jsx:encode(Response), ExtraHeaders0, ReturnCode0};
+                    #{response      := Response,
                       extra_headers := ExtraHeaders0} ->
-                        {jsx:encode(Response), ExtraHeaders0};
+                        {jsx:encode(Response), ExtraHeaders0, ?OKCODE};
                     _ ->
-                        {jsx:encode(Answer), ""}
+                        {jsx:encode(Answer), "", ?OKCODE}
                 end,
             ok = gen_tcp:send(S, http_parser:response(JsonReturn,
-                                                      ExtraHeaders));
+                                                      ExtraHeaders,
+                                                      ReturnCode));
         [{xml, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
@@ -119,17 +126,23 @@ respond(#state{socket = S, data = Data0, route = Route,
                              {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
                              HandlerFun(XmlObj, Parameters, Headers)
                      end,
-            {XmlReturn, ExtraHeaders} =
+            {XmlReturn, ExtraHeaders, ReturnCode} =
                 case Answer of
+                    #{response      := Response,
+                      extra_headers := ExtraHeaders0,
+                      return_code   := ReturnCode0} ->
+                        {xmerl:export_simple(Response, xmerl_xml),
+                         ExtraHeaders0, ReturnCode0};
                     #{response      := Response,
                       extra_headers := ExtraHeaders0} ->
                         {xmerl:export_simple(Response, xmerl_xml),
-                         ExtraHeaders0};
+                         ExtraHeaders0, ?OKCODE};
                     _ ->
-                        {xmerl:export_simple(Answer, xmerl_xml), ""}
+                        {xmerl:export_simple(Answer, xmerl_xml), "", ?OKCODE}
                 end,
             ok = gen_tcp:send(S, http_parser:response(XmlReturn,
-                                                      ExtraHeaders));
+                                                      ExtraHeaders,
+                                                      ReturnCode));
         [{html, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters, Headers),
             ok     = handle_file_html(Answer, S);
@@ -140,15 +153,19 @@ respond(#state{socket = S, data = Data0, route = Route,
     gen_tcp:close(S).
 
 handle_file_html(Answer, S) ->
-    {Return, ExtraHeaders} =
+    {Return, ExtraHeaders, ReturnCode} =
         case Answer of
             #{response      := Response,
+              extra_headers := ExtraHeaders0,
+              return_code   := ReturnCode0} ->
+                {Response, ExtraHeaders0, ReturnCode0};
+            #{response      := Response,
               extra_headers := ExtraHeaders0} ->
-                {Response, ExtraHeaders0};
+                {Response, ExtraHeaders0, ?OKCODE};
             _ ->
-                {Answer, ""}
+                {Answer, "", ?OKCODE}
         end,
-    gen_tcp:send(S, http_parser:response(Return, ExtraHeaders)).
+    gen_tcp:send(S, http_parser:response(Return, ExtraHeaders, ReturnCode)).
 
 -spec handle_cast({data, string()} | timeout | {socket_ready, port()}, state())
     -> {stop, normal, state()} | {noreply, state(), infinity}.
