@@ -92,6 +92,8 @@ http_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
 
 headers([13, 10 | R0]) ->
     {[],R0};
+headers([]) ->
+    {[], []};
 headers(R0) ->
     {Header0, R1} = header(R0),
     NotColon = fun(Input) -> Input /= $: end,
