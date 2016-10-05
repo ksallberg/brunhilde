@@ -46,6 +46,7 @@
                , flags       :: integer()              %% all flags
                , addr        :: port() | undefined     %% client address
                , data        :: string()               %% collected data
+               , body        :: string()               %% only the body
                , body_length :: integer()              %% total body length
                , route       :: string()               %% route expressed
                                                        %% as string()
@@ -74,13 +75,13 @@ init([Socket, Server, Flags]) ->
     {ok, #state{socket=Socket, server=Server, flags=Flags,
                 data="", body_length=-1, route="unknown", parameters=[]}}.
 
-respond(#state{socket = S, data = Data0, route = Route,
+respond(#state{socket = S, body = Body, data = _Data0, route = Route,
                method = Method, parameters = Parameters,
                headers = Headers, server = #{name := ServName}}) ->
     Routes = erlang:apply(ServName, routes, []),
-    Data   = case Data0 of
+    Data   = case Body of
                  [] -> no_data;
-                 _  -> Data0
+                 _  -> Body
              end,
     case [{Proto, HandlerFun} ||
              {Proto, XMethod, XRoute, HandlerFun} <- Routes,
@@ -178,36 +179,34 @@ handle_cast(accept, S = #state{socket=ListenSocket,
     end;
 
 %% Handle the actual client connecting and requesting something
-handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
-    io:format("received data: ~p", [Data]),
-    case length(Data ++ DBuf) == BL of
+handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
+    CurrData = DBuf ++ Data,
+    %% When the HTTP request headers have been fully received
+    case has_received_headers_end(CurrData) of
         true ->
-            NewState = State#state{data = DBuf ++ Data},
-            respond(NewState),
-            {stop, normal, NewState};
-        false ->
-            NewState = case BL of
-                -1 ->
-                    {{Method, Route, Params, v11}, Headers, Body}
-                        = http_parser:parse_request(Data),
-                    NewBL     = get_content_length(Headers),
-                    NewRoute  = Route,
-                    State#state{data        = DBuf ++ Body,
-                                body_length = NewBL,
-                                route       = NewRoute,
-                                headers     = Headers,
-                                parameters  = Params,
-                                method      = Method};
-                _ ->
-                    State#state{data=DBuf ++ Data}
-            end,
-            case length(NewState#state.data) == NewState#state.body_length of
-                true  ->
+            {{Method, Route, Params, v11}, Headers, Body}
+                = http_parser:parse_request(CurrData),
+            NewBL    = get_content_length(Headers),
+            NewRoute = Route,
+            NewState = State#state{data        = CurrData,
+                                   body        = Body,
+                                   body_length = NewBL,
+                                   route       = NewRoute,
+                                   headers     = Headers,
+                                   parameters  = Params,
+                                   method      = Method},
+            case NewBL == length(Body) of
+                %% We received entire HTTP request
+                true ->
                     respond(NewState),
                     {stop, normal, NewState};
+                %% No, wait for more
                 false ->
                     {noreply, NewState, ?TIMEOUT}
-            end
+            end;
+        false ->
+            NewState = State#state{data = CurrData},
+            {noreply, NewState, ?TIMEOUT}
     end;
 
 handle_cast(timeout, State) ->
@@ -266,3 +265,17 @@ get_content_length(Headers) ->
         [ConLen] -> {Int, _} = string:to_integer(ConLen),
                     Int
     end.
+
+-compile(export_all).
+
+has_received_headers_end(Data) ->
+    do_has_received_headers_end(Data).
+
+do_has_received_headers_end([])        -> false;
+do_has_received_headers_end([_])       -> false;
+do_has_received_headers_end([_, _])    -> false;
+do_has_received_headers_end([_, _, _]) -> false;
+do_has_received_headers_end([13, 10, 13, 10 | _]) ->
+    true;
+do_has_received_headers_end([_ | Xs]) ->
+    do_has_received_headers_end(Xs).
