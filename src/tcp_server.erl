@@ -179,6 +179,7 @@ handle_cast(accept, S = #state{socket=ListenSocket,
 
 %% Handle the actual client connecting and requesting something
 handle_cast({data, Data}, #state{data = DBuf, body_length = BL} = State) ->
+    io:format("received data: ~p", [Data]),
     case length(Data ++ DBuf) == BL of
         true ->
             NewState = State#state{data = DBuf ++ Data},
