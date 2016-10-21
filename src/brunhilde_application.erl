@@ -71,6 +71,7 @@ do_start( CollectStats
         , UseReloader
         , Servers) ->
     lager:start(),
+    ssl:start(),
     Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
                      , {StartObserver, ?START_OBSERVER}
                      , {UseReloader,   ?USE_RELOADER}

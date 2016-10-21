@@ -31,7 +31,7 @@
 -export([ start_link/2
         , init/1
         , start_server/1
-        , start_socket/3]).
+        , start_socket/4]).
 
 start_link(Servers, Flags) ->
     supervisor:start_link( {local, ?MODULE}
@@ -54,31 +54,47 @@ init([Servers, Flags]) ->
                  preiod    => 60},
     {ok, {SupFlags, ChildSpec}}.
 
-start_server({#{name     := Name,
-                port     := Port,
-                workers  := Workers
+start_server({#{name      := Name,
+                port      := Port,
+                workers   := Workers,
+                transport := Transport
                } = Server,
               Flags}) ->
     emit_terminal_box(Port),
     %% Initialize the server
     erlang:apply(Name, init, []),
-    {ok, ListenSocket} = gen_tcp:listen(Port,
-                                        [list,
-                                         {packet, 0},
-                                         {reuseaddr, true},
-                                         {keepalive, true},
-                                         {backlog, 30}]
-                                       ),
-    SpawnFun = fun() ->
-                       [start_socket(ListenSocket, Server, Flags)
-                        || _ <- lists:seq(1, Workers)],
-                       ok
-               end,
-    spawn_link(SpawnFun).
+    case Transport of
+        http ->
+            {ok, ListenSocket} = gen_tcp:listen(Port,
+                                                [ list
+                                                , {packet, 0}
+                                                , {reuseaddr, true}
+                                                , {keepalive, true}
+                                                , {backlog, 30}]
+                                               ),
+            SpawnFun = fun() ->
+                               [start_socket(ListenSocket, Server, Flags, http)
+                                || _ <- lists:seq(1, Workers)],
+                               ok
+                       end,
+            spawn_link(SpawnFun);
+        {https, CertFile, PrivkeyFile} ->
+            {ok, ListenSocket} = ssl:listen(Port,
+                                            [ {reuseaddr, true}
+                                            , {certfile, CertFile}
+                                            , {keyfile, PrivkeyFile}
+                                            , {keepalive, true}]
+                                           ),
+            SpawnFun = fun() ->
+                               [start_socket(ListenSocket, Server, Flags, https)
+                                || _ <- lists:seq(1, Workers)],
+                               ok
+                       end,
+            spawn_link(SpawnFun)
+    end.
 
-start_socket(ListenSocket, Server, Flags) ->
-    gen_tcp:controlling_process(ListenSocket, self()),
-    supervisor:start_child(?MODULE, [ListenSocket, Server, Flags]).
+start_socket(ListenSocket, Server, Flags, Transport) ->
+    supervisor:start_child(?MODULE, [ListenSocket, Server, Flags, Transport]).
 
 emit_terminal_box(Port) ->
     PortStr = lists:flatten(io_lib:format("~p", [Port])),
