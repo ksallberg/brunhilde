@@ -4,11 +4,13 @@ brunhilde (tested with Erlang OTP R19)
 ![alt tag](static/brunhilde.jpg)
 
 brunhilde is a minimal Erlang/OTP web server,
-ideal for rapid prototyping and hackathons/coding
-competitions. It is designed to be as simple as
-possible, so that it can quickly be modified or
-debugged. It is not designed to provide high
-performance or be used in production.
+designed for rapid prototyping and hackathons/coding
+competitions. As simple as possible, so that it can
+quickly be modified or debugged. It is not designed
+to provide high performance or be used in production.
+
+#News:
+Version 1.5.4 supports TLS (for HTTPS).
 
 #Dependencies:
 * rebar3 (https://www.rebar3.org/)
@@ -45,15 +47,22 @@ For example:
   start_observer => false,
   start_debugger => false,
   servers =>
-   [#{name     => battleship,
-      port     => 28251,
-      workers  => 10},
-    #{name     => helloworld,
-      port     => 5030,
-      workers  => 5},
-    #{name     => stats,
-      port     => 8080,
-      workers  => 2}
+   [#{name      => battleship,
+      port      => 28251,
+      workers   => 10,
+      transport => http},
+    #{name      => helloworld,
+      port      => 5030,
+      workers   => 5,
+      transport => http},
+    #{name      => stats,
+      port      => 8080,
+      workers   => 2,
+      transport => {https,
+                    "/some/cert.pem",
+                    "/some/privkey.pem",
+                   }
+     }
    ]}.
 ```
 
