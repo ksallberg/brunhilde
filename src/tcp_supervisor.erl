@@ -78,11 +78,12 @@ start_server({#{name      := Name,
                                ok
                        end,
             spawn_link(SpawnFun);
-        {https, CertFile, PrivkeyFile} ->
+        {https, CertFile, PrivkeyFile, ChainFile} ->
             {ok, ListenSocket} = ssl:listen(Port,
                                             [ {reuseaddr, true}
                                             , {certfile, CertFile}
                                             , {keyfile, PrivkeyFile}
+                                            , {cacertfile, ChainFile}
                                             , {keepalive, true}]
                                            ),
             SpawnFun = fun() ->

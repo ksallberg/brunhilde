@@ -217,7 +217,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(CurrData) of
         true ->
-            {{Method, Route, Params, v11}, Headers, Body}
+            {{Method, Route, Params, _HTTPVersion}, Headers, Body}
                 = http_parser:parse_request(CurrData),
             NewBL    = get_content_length(Headers),
             NewRoute = Route,
@@ -261,6 +261,10 @@ handle_info({ssl, _Sock, Bin}, StateData) ->
     ?MODULE:handle_cast({data, Bin}, StateData);
 
 handle_info({tcp_closed, Socket},
+            #state{socket=Socket} = StateData) ->
+    {stop, normal, StateData};
+
+handle_info({ssl_closed, Socket},
             #state{socket=Socket} = StateData) ->
     {stop, normal, StateData};
 
@@ -316,9 +320,19 @@ do_has_received_headers_end([_ | Xs]) ->
     do_has_received_headers_end(Xs).
 
 do_send(#state{transport=http, socket=Socket}, Message) ->
-    gen_tcp:send(Socket, Message);
+    try
+        gen_tcp:send(Socket, Message)
+    catch _:_ ->
+        error_logger:error_msg("~p Could not send to socket.~n", [self()])
+    end,
+    ok;
 do_send(#state{transport=https, socket=Socket}, Message) ->
-    ssl:send(Socket, Message).
+    try
+        ssl:send(Socket, Message)
+    catch _:_ ->
+        error_logger:error_msg("~p Could not send to socket.~n", [self()])
+    end,
+    ok.
 
 do_close(#state{transport=http, socket=Socket}) ->
     gen_tcp:close(Socket);
