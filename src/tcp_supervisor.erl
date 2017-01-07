@@ -54,15 +54,15 @@ init([Servers, Flags]) ->
                  preiod    => 60},
     {ok, {SupFlags, ChildSpec}}.
 
-start_server({#{name      := Name,
-                port      := Port,
-                workers   := Workers,
-                transport := Transport
+start_server({#{server_name := ServerName,
+                port        := Port,
+                workers     := Workers,
+                transport   := Transport
                } = Server,
               Flags}) ->
     emit_terminal_box(Port),
     %% Initialize the server
-    erlang:apply(Name, init, []),
+    erlang:apply(ServerName, init, []),
     case Transport of
         http ->
             {ok, ListenSocket} = gen_tcp:listen(Port,

@@ -50,7 +50,7 @@
 start_link(Server) ->
     gen_server:start_link(?MODULE, Server, []).
 
-init(Server = #{name := Name}) ->
+init(Server = #{instance_name := Name}) ->
     InitialState = #state{ server = Server
                          , connections = 0
                          },

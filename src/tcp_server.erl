@@ -86,7 +86,7 @@ init([Socket, Server, Flags, Transport]) ->
 
 respond(#state{body = Body, data = _Data0, route = Route,
                method = Method, parameters = Parameters,
-               headers = Headers, server = #{name := ServName}
+               headers = Headers, server = #{server_name := ServName}
               } = State) ->
     Routes = erlang:apply(ServName, routes, []),
     Data   = case Body of
@@ -272,10 +272,10 @@ handle_info(_Info, StateData) ->
     {noreply, StateData}.
 
 -spec terminate(any(), state()) -> ok.
-terminate(_Reason, #state{server = #{name := ServerName},
+terminate(_Reason, #state{server = #{instance_name := InstanceName},
                           flags  = Flags} = State) ->
     %% Collect statistics
-    case tracker_server:ask_for(ServerName) of
+    case tracker_server:ask_for(InstanceName) of
         %% No stats server available
         false ->
             ok;

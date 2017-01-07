@@ -70,7 +70,7 @@ handle_call(_, _From, State) ->
 handle_info(trigger, Servers = State) ->
     %% Reload server business logic
     lager:log(info, self(), "reloader_server: Reloading servers.", []),
-    F = fun(#{name := ServerName}) ->
+    F = fun(#{server_name := ServerName}) ->
                 ServerNameStr = ?a2l(ServerName),
                 BeamFile = "priv/" ++ ServerNameStr,
                 code:purge(ServerName),
