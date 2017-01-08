@@ -1,14 +1,14 @@
 -module(stats).
 
--export([ init/0
+-export([ init/1
         , routes/0]).
 
 -behaviour(http_handler).
 
 %% Called upon the start of the server, server
 %% can do whatever it wishes do to here.
--spec init() -> atom().
-init() ->
+-spec init(atom()) -> atom().
+init(_InstanceName) ->
     ok.
 
 routes() ->

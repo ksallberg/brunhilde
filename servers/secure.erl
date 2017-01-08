@@ -1,12 +1,12 @@
 -module(secure).
 
--export([ init/0
+-export([ init/1
         , routes/0]).
 
 -behaviour(http_handler).
 
--spec init() -> atom().
-init() ->
+-spec init(atom()) -> atom().
+init(_InstanceName) ->
     ok.
 
 routes() ->

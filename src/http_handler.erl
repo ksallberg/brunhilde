@@ -27,7 +27,8 @@
 
 -module(http_handler).
 
--callback init() -> atom().
+%% init gets the server's instance name as input
+-callback init(atom()) -> atom().
 
 %% protocol, verb, address, callback
 -callback routes() ->

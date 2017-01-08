@@ -1,6 +1,6 @@
 -module(battleship).
 
--export([ init/0
+-export([ init/1
         , routes/0]).
 
 -behaviour(http_handler).
@@ -20,8 +20,8 @@
 -define(DB, battleship_memory).
 
 %% Called upon the start of the server
--spec init() -> atom().
-init() ->
+-spec init(atom()) -> atom().
+init(_InstanceName) ->
     ets:new(?DB, [public, set, named_table]),
     ets:delete_all_objects(?DB),
     NewBoard = new_board(),
