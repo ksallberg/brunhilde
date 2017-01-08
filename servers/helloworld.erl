@@ -17,27 +17,27 @@ init(InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, get, "/helloworld/hello/",        fun handle_hello/3}
-    , {json, get, "/error",                    fun handle_error/3}
-    , {html, get, "/helloworld.html",          fun handle_html/3}
-    , {html, get, "/helloworld2.html",         fun handle_html2/3}
-    , {xml,  get, "/helloworld/xml/",          fun handle_xml/3}
-    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/3}
-    , {html, get, "/helloworld/template",      fun handle_template/3}
-    , {html, get, "/setcookie",                fun set_cookie/3}
-    , {html, get, "/hascookie",                fun has_cookie/3}
-    , {file, get, "/favicon.ico",              fun handle_icon/3}
-    , {'*',                                    fun handle_wildcard/3}].
+    [ {json, get, "/helloworld/hello/",        fun handle_hello/4}
+    , {json, get, "/error",                    fun handle_error/4}
+    , {html, get, "/helloworld.html",          fun handle_html/4}
+    , {html, get, "/helloworld2.html",         fun handle_html2/4}
+    , {xml,  get, "/helloworld/xml/",          fun handle_xml/4}
+    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/4}
+    , {html, get, "/helloworld/template",      fun handle_template/4}
+    , {html, get, "/setcookie",                fun set_cookie/4}
+    , {html, get, "/hascookie",                fun has_cookie/4}
+    , {file, get, "/favicon.ico",              fun handle_icon/4}
+    , {'*',                                    fun handle_wildcard/4}].
 
-handle_hello(_Data, Parameters, _Headers) ->
+handle_hello(_Data, Parameters, _Headers, _InstanceName) ->
     lager:log(info, self(), "Someone asked for ~p", [Parameters]),
     #{<<"hello">> => <<"hello2u">>}.
 
-handle_error(_Data, _Parameters, _Headers) ->
+handle_error(_Data, _Parameters, _Headers, _InstanceName) ->
     lager:log(error, self(), "some error!"),
     #{<<"hello">> => <<"error">>}.
 
-handle_html(_Data, _Parameters, _Headers) ->
+handle_html(_Data, _Parameters, _Headers, _InstanceName) ->
     Html = "<html>"
            "  <head>"
            "     <title>Hello!</title>"
@@ -49,7 +49,7 @@ handle_html(_Data, _Parameters, _Headers) ->
            "</html>",
     ?l2b(Html).
 
-handle_html2(_Data, _Parameters, _Headers) ->
+handle_html2(_Data, _Parameters, _Headers, _InstanceName) ->
     Html = "<html>"
            "  <head>"
            "     <title>Hello!</title>"
@@ -63,7 +63,7 @@ handle_html2(_Data, _Parameters, _Headers) ->
            "</html>",
     ?l2b(Html).
 
-handle_xml(_Data, _Parameters, _Headers) ->
+handle_xml(_Data, _Parameters, _Headers, _InstanceName) ->
     [tree()].
 
 %% tree is the property of:
@@ -78,7 +78,7 @@ tree() ->
                 attributes=[#xmlAttribute{name=xmlns, value=Ns1}],
                 content=Content}.
 
-handle_template(_, _, _Headers) ->
+handle_template(_, _, _Headers, _InstanceName) ->
     {ok, Module} = erlydtl:compile_file("static/example_template.dtl",
                                         template_name),
     {ok, Binary} = Module:render([ {thursday, <<"this is a day">>}
@@ -86,20 +86,20 @@ handle_template(_, _, _Headers) ->
                                  ]),
     Binary.
 
-handle_pic(_, _, _) ->
+handle_pic(_, _, _, _InstanceName) ->
     {ok, Binary} = file:read_file("static/brunhilde.jpg"),
     Binary.
 
-handle_icon(_, _, _) ->
+handle_icon(_, _, _, _InstanceName) ->
     {ok, Binary} = file:read_file("static/favicon.ico"),
     Binary.
 
-set_cookie(_Data, _Parameters, _Headers) ->
+set_cookie(_Data, _Parameters, _Headers, _InstanceName) ->
     #{response      => <<"Cookie set!">>,
       extra_headers => "Set-Cookie: theme=dark\r\n"
                        "Set-Cookie: user=alice\r\n"}.
 
-has_cookie(_Data, _Parameters, Headers) ->
+has_cookie(_Data, _Parameters, Headers, _InstanceName) ->
     Cookies = [Cookies || {"Cookie", Cookies} <- Headers],
     Return = case Cookies of
                  [] ->
@@ -109,5 +109,5 @@ has_cookie(_Data, _Parameters, Headers) ->
              end,
     Return.
 
-handle_wildcard(_Data, _Parameters, _Headers) ->
+handle_wildcard(_Data, _Parameters, _Headers, _InstanceName) ->
     <<"Error 404: i dont know what youre saying">>.

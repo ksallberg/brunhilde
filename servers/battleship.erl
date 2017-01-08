@@ -29,19 +29,19 @@ init(_InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, post, "/battleship/register/",  fun handle_register/3}
-    , {json, post, "/battleship/shoot/",     fun handle_shoot/3}
-    , {json, post, "/battleship/radar/",     fun handle_radar/3}
-    , {json, get,  "/battleship/radar_all/", fun handle_radar_all/3}
-    , {json, post, "/battleship/reset/",     fun handle_reset/3}
-    , {json, get,  "/battleship/info/",      fun handle_info/3}
-    , {file, get,  "/favicon.ico",           fun handle_icon/3}
-    , {'*',                                  fun handle_wildcard/3}].
+    [ {json, post, "/battleship/register/",  fun handle_register/4}
+    , {json, post, "/battleship/shoot/",     fun handle_shoot/4}
+    , {json, post, "/battleship/radar/",     fun handle_radar/4}
+    , {json, get,  "/battleship/radar_all/", fun handle_radar_all/4}
+    , {json, post, "/battleship/reset/",     fun handle_reset/4}
+    , {json, get,  "/battleship/info/",      fun handle_info/4}
+    , {file, get,  "/favicon.ico",           fun handle_icon/4}
+    , {'*',                                  fun handle_wildcard/4}].
 
 %-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,
 %% Register the player, OR error
-handle_register(Json, _Parameters, _Headers) ->
+handle_register(Json, _Parameters, _Headers, _InstanceName) ->
     %% look at the Json, do something, and reply with a new json
     #{<<"player_name">> := PlayerName} = Json,
     Players    = ets:lookup(?DB, players),
@@ -62,7 +62,7 @@ handle_register(Json, _Parameters, _Headers) ->
 %% Find its corresponding game board,
 %% Shoot and update the game board, OR error
 %% FIXME: Right now assumes the input format is correct, check it is
-handle_shoot(Json, _Parameters, _Headers) ->
+handle_shoot(Json, _Parameters, _Headers, _InstanceName) ->
     PlayerName  = maps:get(<<"player_name">>, Json),
     Coordinates = maps:get(<<"shoot_at">>, Json),
     [{players, Players}] = ets:lookup(?DB, players),
@@ -79,7 +79,8 @@ handle_shoot(Json, _Parameters, _Headers) ->
     end.
 
 %% returns the game board
-handle_radar(#{<<"player_name">> := PlayerName}, _Ps, _Headers) ->
+handle_radar(#{<<"player_name">> := PlayerName}, _Ps,
+             _Headers, _InstanceName) ->
     [{players, Players}] = ets:lookup(?DB, players),
     Player  = lists:keyfind(PlayerName, 2, Players),
     case Player of
@@ -95,7 +96,7 @@ handle_radar(#{<<"player_name">> := PlayerName}, _Ps, _Headers) ->
     end.
 
 %% See all players and their current game boards.
-handle_radar_all(_, _Parameters, _Headers) ->
+handle_radar_all(_, _Parameters, _Headers, _InstanceName) ->
     case ets:lookup(?DB, players) of
         [] -> #{<<"radar_all">> => <<"no players registered">>};
         [{players, Players}] ->
@@ -115,7 +116,8 @@ handle_radar_all(_, _Parameters, _Headers) ->
 
 %% Clear the database and create a new round
 %% of battleship with no players
-handle_reset(#{<<"password">> := Pw}, _Parameters, _Headers) ->
+handle_reset(#{<<"password">> := Pw}, _Parameters,
+             _Headers, _InstanceName) ->
     case Pw of
         <<"pretty please">> ->
             ets:delete_all_objects(?DB),
@@ -126,17 +128,17 @@ handle_reset(#{<<"password">> := Pw}, _Parameters, _Headers) ->
             #{<<"status">> => <<"error, wrong password">>}
     end.
 
-handle_info(_Json, _Parameters, _Headers) ->
+handle_info(_Json, _Parameters, _Headers, _InstanceName) ->
     #{<<"info_text">> =>
       <<"This is a battleship game to show how to use erlrest">>}.
 
-handle_icon(_, _, _) ->
+handle_icon(_, _, _, _InstanceName) ->
     {ok, Binary} = file:read_file("static/favicon.ico"),
     Binary.
 
 %% Return a json object telling the client it
 %% is requesting a non-existing route.
-handle_wildcard(_Json, _Parameters, _Headers) ->
+handle_wildcard(_Json, _Parameters, _Headers, _InstanceName) ->
     <<"no route matching">>.
 
 %%%%%%%%%%%%%%%%%%%%%%%%

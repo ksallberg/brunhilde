@@ -86,7 +86,8 @@ init([Socket, Server, Flags, Transport]) ->
 
 respond(#state{body = Body, data = _Data0, route = Route,
                method = Method, parameters = Parameters,
-               headers = Headers, server = #{server_name := ServName}
+               headers = Headers, server = #{server_name := ServName,
+                                             instance_name := InstanceName}
               } = State) ->
     Routes = erlang:apply(ServName, routes, []),
     Data   = case Body of
@@ -101,17 +102,20 @@ respond(#state{body = Body, data = _Data0, route = Route,
                          false ->
                              <<"404 error">>;
                          {'*', WildcardFun} ->
-                             WildcardFun(Data, Parameters, Headers)
+                             WildcardFun(Data, Parameters,
+                                         Headers, InstanceName)
                      end,
             ok = do_send(State,
                          http_parser:response(Answer, "", "404 NOT FOUND"));
         [{json, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
-                             HandlerFun(no_data, Parameters, Headers);
+                             HandlerFun(no_data, Parameters,
+                                        Headers, InstanceName);
                          _ ->
                              JsonObj = jsx:decode(?l2b(Data), [return_maps]),
-                             HandlerFun(JsonObj, Parameters, Headers)
+                             HandlerFun(JsonObj, Parameters,
+                                        Headers, InstanceName)
                      end,
             {JsonReturn, ExtraHeaders, ReturnCode} =
                 case Answer of
@@ -131,10 +135,12 @@ respond(#state{body = Body, data = _Data0, route = Route,
         [{xml, HandlerFun}] ->
             Answer = case Data of
                          no_data ->
-                             HandlerFun(no_data, Parameters, Headers);
+                             HandlerFun(no_data, Parameters,
+                                        Headers, InstanceName);
                          _ ->
                              {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
-                             HandlerFun(XmlObj, Parameters, Headers)
+                             HandlerFun(XmlObj, Parameters,
+                                        Headers, InstanceName)
                      end,
             {XmlReturn, ExtraHeaders, ReturnCode} =
                 case Answer of
@@ -154,10 +160,10 @@ respond(#state{body = Body, data = _Data0, route = Route,
                                                      ExtraHeaders,
                                                      ReturnCode));
         [{html, HandlerFun}] ->
-            Answer = HandlerFun(Data, Parameters, Headers),
+            Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State);
         [{file, HandlerFun}] ->
-            Answer = HandlerFun(Data, Parameters, Headers),
+            Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State)
     end,
     do_close(State).

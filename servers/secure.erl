@@ -10,11 +10,11 @@ init(_InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, get, "/", fun handle_stats/3}
-    , {'*',            fun handle_wildcard/3}].
+    [ {json, get, "/", fun handle_stats/4}
+    , {'*',            fun handle_wildcard/4}].
 
-handle_stats(_Data, _Parameters, _Headers) ->
+handle_stats(_Data, _Parameters, _Headers, _InstanceName) ->
     #{<<"message">> => <<"hello!">>}.
 
-handle_wildcard(_Data, _Parameters, _Headers) ->
+handle_wildcard(_Data, _Parameters, _Headers, _InstanceName) ->
     <<"404">>.
