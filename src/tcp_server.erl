@@ -246,10 +246,8 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(CurrData) of
         true ->
-            io:format("CurrData: ~p\n", [CurrData]),
             {{Method, Route, Params, _HTTPVersion}, Headers, Body}
                 = http_parser:parse_request(CurrData),
-            io:format("{Method, Route, Params, _HTTPVersion}~p\n", [{Method, Route, Params, _HTTPVersion}]),
             NewBL    = get_content_length(Headers),
             NewRoute = Route,
             NewState = State#state{data        = CurrData,
