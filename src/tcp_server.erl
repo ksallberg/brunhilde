@@ -85,18 +85,25 @@ init([Socket, Server, Flags, Transport]) ->
                }}.
 
 respond(#state{body = Body, data = _Data0, route = Route,
-               method = Method, parameters = Parameters,
-               headers = Headers, server = #{server_name := ServName,
-                                             instance_name := InstanceName}
-              } = State) ->
+                  method = Method, parameters = Parameters,
+                  headers = Headers, server = #{server_name := ServName,
+                                                instance_name := InstanceName}
+                 } = State) ->
     Routes = erlang:apply(ServName, routes, []),
     Data   = case Body of
                  [] -> no_data;
                  _  -> Body
              end,
+    Subdomain = http_parser:get_subdomain(Headers),
     case [{Proto, HandlerFun} ||
-             {Proto, XMethod, XRoute, HandlerFun} <- Routes,
-             Route == XRoute andalso Method == XMethod] of
+             #route{ protocol = Proto
+                   , verb = XMethod
+                   , address = XRoute
+                   , subdomain = XSubdomain
+                   , callback = HandlerFun} <- Routes,
+             Route == XRoute andalso
+             Method == XMethod andalso
+             Subdomain == XSubdomain] of
         [] ->
             Answer = case lists:keyfind('*', 1, Routes) of
                          false ->
@@ -107,7 +114,8 @@ respond(#state{body = Body, data = _Data0, route = Route,
                      end,
             ok = do_send(State,
                          http_parser:response(Answer, "", "404 NOT FOUND"));
-        [{json, HandlerFun}] ->
+        [{json, HandlerFun0}] ->
+            HandlerFun = mk_handler_fun(HandlerFun0),
             Answer = case Data of
                          no_data ->
                              HandlerFun(no_data, Parameters,
@@ -132,7 +140,8 @@ respond(#state{body = Body, data = _Data0, route = Route,
             ok = do_send(State, http_parser:response(JsonReturn,
                                                      ExtraHeaders,
                                                      ReturnCode));
-        [{xml, HandlerFun}] ->
+        [{xml, HandlerFun0}] ->
+            HandlerFun = mk_handler_fun(HandlerFun0),
             Answer = case Data of
                          no_data ->
                              HandlerFun(no_data, Parameters,
@@ -159,14 +168,28 @@ respond(#state{body = Body, data = _Data0, route = Route,
             ok = do_send(State, http_parser:response(XmlReturn,
                                                      ExtraHeaders,
                                                      ReturnCode));
-        [{html, HandlerFun}] ->
+        [{html, HandlerFun0}] ->
+            HandlerFun = mk_handler_fun(HandlerFun0),
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State);
-        [{file, HandlerFun}] ->
+        [{file, HandlerFun0}] ->
+            HandlerFun = mk_handler_fun(HandlerFun0),
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State)
     end,
     do_close(State).
+
+%% Subdomain handler fun
+mk_handler_fun({Mod, Fun}) ->
+    fun(JsonObj, Parameters, Headers, InstanceName) ->
+            erlang:apply(Mod, Fun, [JsonObj,
+                                    Parameters,
+                                    Headers,
+                                    InstanceName])
+    end;
+%% Fun already given
+mk_handler_fun(Fun) when is_function(Fun) ->
+    Fun.
 
 handle_file_html(Answer, State) ->
     {Return, ExtraHeaders, ReturnCode} =
@@ -223,8 +246,10 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(CurrData) of
         true ->
+            io:format("CurrData: ~p\n", [CurrData]),
             {{Method, Route, Params, _HTTPVersion}, Headers, Body}
                 = http_parser:parse_request(CurrData),
+            io:format("{Method, Route, Params, _HTTPVersion}~p\n", [{Method, Route, Params, _HTTPVersion}]),
             NewBL    = get_content_length(Headers),
             NewRoute = Route,
             NewState = State#state{data        = CurrData,

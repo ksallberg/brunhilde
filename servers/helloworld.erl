@@ -6,7 +6,6 @@
 -behaviour(http_handler).
 
 -include("include/brunhilde.hrl").
-
 -include_lib("xmerl/include/xmerl.hrl").
 
 %% Called upon the start of the server, server
@@ -17,17 +16,47 @@ init(InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, get, "/helloworld/hello/",        fun handle_hello/4}
-    , {json, get, "/error",                    fun handle_error/4}
-    , {html, get, "/helloworld.html",          fun handle_html/4}
-    , {html, get, "/helloworld2.html",         fun handle_html2/4}
-    , {xml,  get, "/helloworld/xml/",          fun handle_xml/4}
-    , {file, get, "/helloworld/brunhilde.jpg", fun handle_pic/4}
-    , {html, get, "/helloworld/template",      fun handle_template/4}
-    , {html, get, "/setcookie",                fun set_cookie/4}
-    , {html, get, "/hascookie",                fun has_cookie/4}
-    , {file, get, "/favicon.ico",              fun handle_icon/4}
-    , {'*',                                    fun handle_wildcard/4}].
+    [ #route{protocol = json,
+             verb = get,
+             address = "/helloworld/hello/",
+             callback = fun handle_hello/4}
+    , #route{protocol = json,
+             verb = get,
+             address = "/error",
+             callback = fun handle_error/4}
+    , #route{protocol = html,
+             verb = get,
+             address = "/helloworld.html",
+             callback = fun handle_html/4}
+    , #route{protocol = html,
+             verb = get,
+             address = "/helloworld2.html",
+             callback = fun handle_html2/4}
+    , #route{protocol = xml,
+             verb = get,
+             address = "/helloworld/xml/",
+             callback = fun handle_xml/4}
+    , #route{protocol = file,
+             verb = get,
+             address = "/helloworld/brunhilde.jpg",
+             callback = fun handle_pic/4}
+    , #route{protocol = html,
+             verb = get,
+             address = "/helloworld/template",
+             callback = fun handle_template/4}
+    , #route{protocol = html,
+             verb = get,
+             address = "/setcookie",
+             callback = fun set_cookie/4}
+    , #route{protocol = html,
+             verb = get,
+             address = "/hascookie",
+             callback = fun has_cookie/4}
+    , #route{protocol = file,
+             verb = get,
+             address = "/favicon.ico",
+             callback = fun handle_icon/4}
+    , {'*', fun handle_wildcard/4}].
 
 handle_hello(_Data, Parameters, _Headers, _InstanceName) ->
     lager:log(info, self(), "Someone asked for ~p", [Parameters]),

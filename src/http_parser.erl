@@ -27,7 +27,8 @@
 -export([ parse_request/1
         , response/3
         , parameters/1
-        , cookies/1]).
+        , cookies/1
+        , get_subdomain/1]).
 
 -type method() :: 'delete' | 'get' | 'post' | 'put'.
 -type http_version() :: 'v10' | 'v11'.
@@ -123,16 +124,26 @@ parameters(Ls) ->
 parameter(Ls) ->
     {Name, Rest}     = lists:splitwith(fun(X) -> X /= $= end, Ls),
     {Content, Rest2} = lists:splitwith(fun(X) -> X /= $& end,
-                                       lists:nthtail(1,Rest)
-                                      ), % drop = char
+                                       lists:nthtail(1,Rest)), % drop = char
     {{Name, Content}, Rest2}.
 
 cookies(CookieString) ->
-    Cs = re:split(CookieString, "; ", [{return, list}]),
+    Cs = string:tokens(CookieString, "; "),
     lists:map(fun(X) ->
-                      [A, B] = re:split(X, "=", [{return, list}]),
+                      [A, B] = string:tokens(X, "="),
                       {A, B}
               end, Cs).
+
+get_subdomain(Headers) ->
+    Host = proplists:get_value("Host", Headers),
+    case string:tokens(Host, ".") of
+        ["www", _, _] ->
+            "*";
+        [Subdomain, _Domain, _Rest] ->
+            Subdomain;
+        _ ->
+            "*"
+    end.
 
 %% for now always send access-control-allow
 -spec response(string(), string(), string()) -> string().

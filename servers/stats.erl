@@ -4,6 +4,7 @@
         , routes/0]).
 
 -behaviour(http_handler).
+-include("include/brunhilde.hrl").
 
 %% Called upon the start of the server, server
 %% can do whatever it wishes do to here.
@@ -12,10 +13,19 @@ init(_InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, get, "/",            fun handle_stats/4}
-    , {file, get, "/stats.html",  fun handle_file/4}
-    , {file, get, "/favicon.ico", fun handle_icon/4}
-    , {'*',                       fun handle_wildcard/4}].
+    [ #route{protocol = json,
+             verb = get,
+             address = "/",
+             callback = fun handle_stats/4}
+    , #route{protocol = file,
+             verb = get,
+             address = "/stats.html",
+             callback = fun handle_file/4}
+    , #route{protocol = file,
+             verb = get,
+             address = "/favicon.ico",
+             callback = fun handle_icon/4}
+    , {'*', fun handle_wildcard/4}].
 
 handle_stats(_Data, _Parameters, _Headers, _InstanceName) ->
     Stats = tracker_server:get_stats(),

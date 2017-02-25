@@ -3,6 +3,8 @@
 -export([ init/1
         , routes/0]).
 
+-include("include/brunhilde.hrl").
+
 -behaviour(http_handler).
 
 %% tip: there is an application wide ets table
@@ -29,14 +31,35 @@ init(_InstanceName) ->
     ok.
 
 routes() ->
-    [ {json, post, "/battleship/register/",  fun handle_register/4}
-    , {json, post, "/battleship/shoot/",     fun handle_shoot/4}
-    , {json, post, "/battleship/radar/",     fun handle_radar/4}
-    , {json, get,  "/battleship/radar_all/", fun handle_radar_all/4}
-    , {json, post, "/battleship/reset/",     fun handle_reset/4}
-    , {json, get,  "/battleship/info/",      fun handle_info/4}
-    , {file, get,  "/favicon.ico",           fun handle_icon/4}
-    , {'*',                                  fun handle_wildcard/4}].
+    [ #route{protocol = json,
+             verb = post,
+             address = "/battleship/register/",
+             callback = fun handle_register/4}
+    , #route{protocol = json,
+             verb = post,
+             address = "/battleship/shoot/",
+             callback = fun handle_shoot/4}
+    , #route{protocol = json,
+             verb = post,
+             address = "/battleship/radar/",
+             callback = fun handle_radar/4}
+    , #route{protocol = json,
+             verb = get,
+             address = "/battleship/radar_all/",
+             callback = fun handle_radar_all/4}
+    , #route{protocol = json,
+             verb = post,
+             address = "/battleship/reset/",
+             callback = fun handle_reset/4}
+    , #route{protocol = json,
+             verb = get,
+             address = "/battleship/info/",
+             callback = fun handle_info/4}
+    , #route{protocol = file,
+             verb = get,
+             address = "/favicon.ico",
+             callback = fun handle_icon/4}
+    , {'*', fun handle_wildcard/4}].
 
 %-spec match(atom(), string(), tuple() | atom(), [{atom(), atom()}]) -> tuple().
 %% Get the player name from Json,

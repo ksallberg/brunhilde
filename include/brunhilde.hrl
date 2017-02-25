@@ -10,3 +10,10 @@
 -define(flag_set, fun(F, Fs) ->
                           F band Fs == F
                   end).
+
+-record(route, { protocol        :: atom()
+               , verb            :: atom()
+               , address         :: string()
+               , subdomain = "*" :: string()
+               , callback        :: term()
+               }).
