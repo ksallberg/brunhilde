@@ -128,9 +128,9 @@ parameter(Ls) ->
     {{Name, Content}, Rest2}.
 
 cookies(CookieString) ->
-    Cs = string:tokens(CookieString, "; "),
+    Cs = re:split(CookieString, "; ", [{return, list}]),
     lists:map(fun(X) ->
-                      [A, B] = string:tokens(X, "="),
+                      [A, B] = re:split(X, "=", [{return, list}]),
                       {A, B}
               end, Cs).
 
