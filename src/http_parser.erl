@@ -137,8 +137,6 @@ cookies(CookieString) ->
 get_subdomain(Headers) ->
     Host = proplists:get_value("Host", Headers),
     case string:tokens(Host, ".") of
-        ["www", _, _] ->
-            "*";
         [Subdomain, _Domain, _Rest] ->
             Subdomain;
         _ ->
