@@ -4,7 +4,7 @@
         , routes/0]).
 
 -behaviour(http_handler).
--include("include/brunhilde.hrl").
+-include("./include/brunhilde.hrl").
 
 %% Called upon the start of the server, server
 %% can do whatever it wishes do to here.

@@ -27,7 +27,7 @@
 
 -behavior(supervisor).
 
--include("include/brunhilde.hrl").
+-include("./include/brunhilde.hrl").
 
 -export([ start_link/1
          , start_server/1

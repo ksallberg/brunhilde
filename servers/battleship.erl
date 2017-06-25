@@ -3,7 +3,7 @@
 -export([ init/1
         , routes/0]).
 
--include("include/brunhilde.hrl").
+-include("./include/brunhilde.hrl").
 
 -behaviour(http_handler).
 

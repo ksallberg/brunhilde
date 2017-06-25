@@ -27,7 +27,7 @@
 
 -module(http_handler).
 
--include("include/brunhilde.hrl").
+-include("./include/brunhilde.hrl").
 
 %% init gets the server's instance name as input
 -callback init(atom()) -> atom().

@@ -5,7 +5,7 @@
 
 -behaviour(http_handler).
 
--include("include/brunhilde.hrl").
+-include("./include/brunhilde.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
 %% Called upon the start of the server, server
