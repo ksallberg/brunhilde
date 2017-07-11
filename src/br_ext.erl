@@ -30,5 +30,4 @@
 -export([add_server/1]).
 
 add_server(Server) ->
-    stats_supervisor:start_server(Server),
     tcp_supervisor:start_server({Server, 1}).
