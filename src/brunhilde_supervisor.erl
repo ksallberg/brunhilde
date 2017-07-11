@@ -28,7 +28,7 @@
 -module(brunhilde_supervisor).
 -behavior(supervisor).
 
--include("./include/brunhilde.hrl").
+-include("brunhilde.hrl").
 
 -export([ start_link/2
         , init/1]).

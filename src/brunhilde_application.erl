@@ -31,7 +31,7 @@
         , stop/1
         , do_start/4]).
 
--include("./include/brunhilde.hrl").
+-include("brunhilde.hrl").
 
 -spec start(any(), term()) -> {ok, pid()}
                            |  {ok, pid(), term()}

@@ -29,7 +29,7 @@
 
 -behaviour(gen_server).
 
--include("./include/brunhilde.hrl").
+-include("brunhilde.hrl").
 
 -export([register/2,
          ask_for/1,

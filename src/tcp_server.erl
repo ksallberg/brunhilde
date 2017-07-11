@@ -29,7 +29,7 @@
 
 -behaviour(gen_server).
 
--include("./include/brunhilde.hrl").
+-include("brunhilde.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
 
 -export([start_link/4]).
