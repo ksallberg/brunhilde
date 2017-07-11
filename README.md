@@ -43,8 +43,7 @@ start in brunhilde.conf.
 
 For example:
 ```erlang
-#{collect_stats  => true,
-  start_observer => false,
+#{start_observer => false,
   start_debugger => false,
   use_reloader   => true,
   servers =>
@@ -53,6 +52,7 @@ For example:
        port          => 28251,
        workers       => 10,
        transport     => http}
+
    , #{server_name   => helloworld,
        instance_name => helloworld_serv,
        port          => 5030,
@@ -65,11 +65,6 @@ For example:
        workers       => 10,
        transport     => http}
 
-   , #{server_name   => stats,
-       instance_name => stats_serv,
-       port          => 8080,
-       workers       => 2,
-       transport     => http}
    , #{server_name   => secure,
        instance_name => secure_serv,
        port          => 4430,
