@@ -8,9 +8,6 @@
                   , brunhilde_supervisor
                   , tcp_server
                   , tcp_supervisor
-                  , stats_supervisor
-                  , stats_server
-                  , tracker_server
                   , reloader_server
                   , br_ext]}
  , {registered, [ tcp_supervisor

@@ -3,7 +3,6 @@
 -define(b2l(V), binary_to_list(V)).
 -define(a2l(V), atom_to_list(V)).
 
--define(COLLECT_STATS,  1 bsl 0).
 -define(START_OBSERVER, 1 bsl 1).
 -define(USE_RELOADER,   1 bsl 2).
 

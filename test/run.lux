@@ -4,7 +4,6 @@
     !make -C ../ start
     ???Erlrest started. Listening at port: 28251.
     ???Erlrest started. Listening at port: 5030.
-    ???Erlrest started. Listening at port: 8080.
 
 [shell queryprompt]
     !curl localhost:5030

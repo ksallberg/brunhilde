@@ -27,9 +27,10 @@
 -author('kristian@purestyle.se').
 
 -behaviour(application).
+
 -export([ start/2
         , stop/1
-        , do_start/4]).
+        , do_start/3]).
 
 -include("brunhilde.hrl").
 
@@ -40,13 +41,11 @@ start(_Type, _Args) ->
     case file:consult("brunhilde.conf") of
         {error, Reason} ->
             ?liof("Could not load brunhilde.conf: ~p~n", [Reason]),
-            CollectStats  = false,
             StartObserver = false,
             StartDebugger = false,
             UseReloader   = false,
             Servers       = [];
-        {ok, [#{collect_stats  := CollectStats,
-                start_observer := StartObserver,
+        {ok, [#{start_observer := StartObserver,
                 start_debugger := StartDebugger,
                 use_reloader   := UseReloader,
                 servers        := Servers}]} ->
@@ -54,26 +53,22 @@ start(_Type, _Args) ->
     end,
     case StartDebugger of
         false ->
-            do_start( CollectStats
-                    , StartObserver
+            do_start( StartObserver
                     , UseReloader
                     , Servers);
         true ->
             debugger:quick(?MODULE, do_start,
-                           [ CollectStats
-                           , StartObserver
+                           [ StartObserver
                            , UseReloader
                            , Servers])
     end.
 
-do_start( CollectStats
-        , StartObserver
+do_start( StartObserver
         , UseReloader
         , Servers) ->
     lager:start(),
     ssl:start(),
-    Flags = mk_flags([ {CollectStats,  ?COLLECT_STATS}
-                     , {StartObserver, ?START_OBSERVER}
+    Flags = mk_flags([ {StartObserver, ?START_OBSERVER}
                      , {UseReloader,   ?USE_RELOADER}
                      ]),
     brunhilde_supervisor:start_link(Servers, Flags).

@@ -301,24 +301,8 @@ handle_info(_Info, StateData) ->
     {noreply, StateData}.
 
 -spec terminate(any(), state()) -> ok.
-terminate(_Reason, #state{server = #{instance_name := InstanceName},
-                          flags  = Flags} = State) ->
-    %% Collect statistics
-    case tracker_server:ask_for(InstanceName) of
-        %% No stats server available
-        false ->
-            ok;
-        %% Send stats, if collect stats has not
-        %% explicitly been set to false.
-        Pid ->
-            case ?flag_set(?COLLECT_STATS, Flags) of
-                true ->
-                    gen_server:cast(Pid, inc_connections);
-                false ->
-                    ok
-            end
-    end,
-    (catch do_close(State)),
+terminate(_Reason, #state{} = State) ->
+    catch do_close(State),
     ok.
 
 %% For now, just return the received state data
