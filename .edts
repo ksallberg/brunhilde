@@ -1,3 +1,3 @@
-:name "erlrest"
+:name "brunhilde"
 :lib-dirs '("_build/default/lib" "lib")
 :app-include-dirs '("include")

@@ -215,14 +215,18 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                                flags=Flags,
                                transport=http
                               }) ->
-    tcp_supervisor:start_socket(ListenSocket,
-                                Server,
-                                Flags,
-                                http),
+    SpawnFun = fun() ->
+            tcp_supervisor:start_socket(ListenSocket,
+                                        Server,
+                                        Flags,
+                                        http)
+               end,
     case gen_tcp:accept(ListenSocket) of
         {ok, AcceptSocket} ->
+            SpawnFun(),
             {noreply, S#state{socket=AcceptSocket}};
         {error, Reason} ->
+            SpawnFun(),
             {stop, Reason, S}
     end;
 
@@ -236,19 +240,24 @@ handle_cast(accept, S = #state{socket=ListenSocket,
     %% If ssl:transport_accept/1 or ssl:ssl_accept/1 fails
     %% then we kill the current process, so that it does not
     %% stay hanging forever.
-    tcp_supervisor:start_socket(ListenSocket,
-                                Server,
-                                Flags,
-                                https),
+    SpawnFun = fun() ->
+                       tcp_supervisor:start_socket(ListenSocket,
+                                                   Server,
+                                                   Flags,
+                                                   https)
+               end,
     case ssl:transport_accept(ListenSocket) of
         {ok, NewSocket} ->
             case ssl:ssl_accept(NewSocket) of
                 ok ->
+                    SpawnFun(),
                     {noreply, S#state{socket=NewSocket}};
                 {error, Reason} ->
+                    SpawnFun(),
                     {stop, Reason, S}
             end;
         {error, Reason} ->
+            SpawnFun(),
             {stop, Reason, S}
     end;
 
