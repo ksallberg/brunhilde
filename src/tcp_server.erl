@@ -228,16 +228,30 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                                flags=Flags,
                                transport=https
                               }) ->
+    %% When we accept this server, we create a new one to
+    %% serve the next upcoming request.
+    %% If ssl:transport_accept/1 or ssl:ssl_accept/1 fails
+    %% then we kill the current process, so that it does not
+    %% stay hanging forever.
+    NextServ = fun() ->
+                       tcp_supervisor:start_socket(ListenSocket,
+                                                   Server,
+                                                   Flags,
+                                                   https)
+               end,
     case ssl:transport_accept(ListenSocket) of
         {ok, NewSocket} ->
-            ssl:ssl_accept(NewSocket),
-            tcp_supervisor:start_socket(ListenSocket,
-                                        Server,
-                                        Flags,
-                                        https),
-            {noreply, S#state{socket=NewSocket}};
-        {error, _Reason} ->
-            {noreply, big_problem_todo}
+            case ssl:ssl_accept(NewSocket) of
+                ok ->
+                    NextServ(),
+                    {noreply, S#state{socket=NewSocket}};
+                {error, Reason} ->
+                    NextServ(),
+                    {stop, Reason, S}
+            end;
+        {error, Reason} ->
+            NextServ(),
+            {stop, Reason, S}
     end;
 
 %% Handle the actual client connecting and requesting something
