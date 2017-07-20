@@ -215,14 +215,17 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                                flags=Flags,
                                transport=http
                               }) ->
+    tcp_supervisor:start_socket(ListenSocket,
+                                Server,
+                                Flags,
+                                http),
     case gen_tcp:accept(ListenSocket) of
         {ok, AcceptSocket} ->
-            tcp_supervisor:start_socket(ListenSocket,
-                                        Server,
-                                        Flags,
-                                        http),
-            {noreply, S#state{socket=AcceptSocket}}
+            {noreply, S#state{socket=AcceptSocket}};
+        {error, Reason} ->
+            {stop, Reason, S}
     end;
+
 handle_cast(accept, S = #state{socket=ListenSocket,
                                server=Server,
                                flags=Flags,
@@ -233,24 +236,19 @@ handle_cast(accept, S = #state{socket=ListenSocket,
     %% If ssl:transport_accept/1 or ssl:ssl_accept/1 fails
     %% then we kill the current process, so that it does not
     %% stay hanging forever.
-    NextServ = fun() ->
-                       tcp_supervisor:start_socket(ListenSocket,
-                                                   Server,
-                                                   Flags,
-                                                   https)
-               end,
+    tcp_supervisor:start_socket(ListenSocket,
+                                Server,
+                                Flags,
+                                https),
     case ssl:transport_accept(ListenSocket) of
         {ok, NewSocket} ->
             case ssl:ssl_accept(NewSocket) of
                 ok ->
-                    NextServ(),
                     {noreply, S#state{socket=NewSocket}};
                 {error, Reason} ->
-                    NextServ(),
                     {stop, Reason, S}
             end;
         {error, Reason} ->
-            NextServ(),
             {stop, Reason, S}
     end;
 
@@ -260,25 +258,36 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(CurrData) of
         true ->
-            {{Method, Route, Params, _HTTPVersion}, Headers, Body}
-                = http_parser:parse_request(CurrData),
-            NewBL    = get_content_length(Headers),
-            NewRoute = Route,
-            NewState = State#state{data        = CurrData,
-                                   body        = Body,
-                                   body_length = NewBL,
-                                   route       = NewRoute,
-                                   headers     = Headers,
-                                   parameters  = Params,
-                                   method      = Method},
-            case NewBL == length(Body) of
-                %% We received entire HTTP request
-                true ->
-                    respond(NewState),
-                    {stop, normal, NewState};
-                %% No, wait for more
-                false ->
-                    {noreply, NewState, ?TIMEOUT}
+            case http_parser:parse_request(CurrData) of
+                {Err, Why} ->
+                    lager:log(info,
+                              self(),
+                              "tcp_server: Error ~p ~p~n.", [Err, Why]),
+                    Answer = <<"404 error">>,
+                    ok = do_send(State,
+                                 http_parser:response(Answer,
+                                                      "",
+                                                      "404 NOT FOUND")),
+                    {stop, normal, State};
+                {{Method, Route, Params, _HTTPVersion}, Headers, Body} ->
+                    NewBL    = get_content_length(Headers),
+                    NewRoute = Route,
+                    NewState = State#state{data        = CurrData,
+                                           body        = Body,
+                                           body_length = NewBL,
+                                           route       = NewRoute,
+                                           headers     = Headers,
+                                           parameters  = Params,
+                                           method      = Method},
+                    case NewBL == length(Body) of
+                        %% We received entire HTTP request
+                        true ->
+                            respond(NewState),
+                            {stop, normal, NewState};
+                        %% No, wait for more
+                        false ->
+                            {noreply, NewState, ?TIMEOUT}
+                    end
             end;
         false ->
             NewState = State#state{data = CurrData},

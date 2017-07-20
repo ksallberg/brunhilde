@@ -39,9 +39,13 @@
 % request, headers and body as a tuple
 -spec parse_request(string()) -> {http_info(), [string()], string()}.
 parse_request(R0) ->
-    {HttpInfo, R1}  = request_line(R0),
-    {Headers, Body} = headers(R1),
-    {HttpInfo, Headers, Body}.
+    try
+        {HttpInfo, R1}  = request_line(R0),
+        {Headers, Body} = headers(R1),
+        {HttpInfo, Headers, Body}
+    catch Err:Why ->
+            {Err, Why}
+    end.
 
 -spec request_line(string()) -> {http_info(), string()}.
 request_line([$G, $E, $T, 32 | R0]) ->
@@ -136,11 +140,16 @@ cookies(CookieString) ->
 
 get_subdomain(Headers) ->
     Host = proplists:get_value("Host", Headers),
-    case string:tokens(Host, ".") of
-        [Subdomain, _Domain, _Rest] ->
-            Subdomain;
+    case Host of
+        undefined ->
+            "*";
         _ ->
-            "*"
+            case string:tokens(Host, ".") of
+                [Subdomain, _Domain, _Rest] ->
+                    Subdomain;
+                _ ->
+                    "*"
+            end
     end.
 
 %% for now always send access-control-allow
