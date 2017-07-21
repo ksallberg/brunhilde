@@ -254,11 +254,17 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                     {noreply, S#state{socket=NewSocket}};
                 {error, Reason} ->
                     SpawnFun(),
-                    {stop, Reason, S}
+                    lager:log(info,
+                              self(),
+                              "tcp_server: Error ~p ~n.", [Reason]),
+                    {stop, normal, S}
             end;
         {error, Reason} ->
             SpawnFun(),
-            {stop, Reason, S}
+            lager:log(info,
+                      self(),
+                      "tcp_server: Error ~p ~n.", [Reason]),
+            {stop, normal, S}
     end;
 
 %% Handle the actual client connecting and requesting something
