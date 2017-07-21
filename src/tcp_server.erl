@@ -227,7 +227,8 @@ handle_cast(accept, S = #state{socket=ListenSocket,
             {noreply, S#state{socket=AcceptSocket}};
         {error, Reason} ->
             SpawnFun(),
-            {stop, Reason, S}
+            CloseState = S#state{socket=undefined},
+            {stop, Reason, CloseState}
     end;
 
 handle_cast(accept, S = #state{socket=ListenSocket,
@@ -256,15 +257,19 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                     SpawnFun(),
                     lager:log(info,
                               self(),
-                              "tcp_server: Error ~p ~n.", [Reason]),
-                    {stop, normal, S}
+                              "tcp_server: Error ~p~n", [Reason]),
+                    %% We want to close the new socket, not the
+                    %% listening socket
+                    CloseState = S#state{socket=NewSocket},
+                    {stop, normal, CloseState}
             end;
         {error, Reason} ->
             SpawnFun(),
             lager:log(info,
                       self(),
-                      "tcp_server: Error ~p ~n.", [Reason]),
-            {stop, normal, S}
+                      "tcp_server: Error ~p~n", [Reason]),
+            CloseState = S#state{socket=undefined},
+            {stop, normal, CloseState}
     end;
 
 %% Handle the actual client connecting and requesting something
@@ -277,7 +282,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                 {Err, Why} ->
                     lager:log(info,
                               self(),
-                              "tcp_server: Error ~p ~p~n.", [Err, Why]),
+                              "tcp_server: Error ~p ~p~n", [Err, Why]),
                     Answer = <<"404 error">>,
                     ok = do_send(State,
                                  http_parser:response(Answer,
@@ -385,6 +390,9 @@ do_send(#state{transport=https, socket=Socket}, Message) ->
     end,
     ok.
 
+do_close(#state{socket=undefined}) ->
+    %% an error has occurred, do not close
+    ok;
 do_close(#state{transport=http, socket=Socket}) ->
     gen_tcp:close(Socket);
 do_close(#state{transport=https, socket=Socket}) ->
