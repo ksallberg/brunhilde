@@ -282,7 +282,8 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                 {Err, Why} ->
                     lager:log(info,
                               self(),
-                              "tcp_server: Error ~p ~p~n", [Err, Why]),
+                              "tcp_server: Error ~p ~p ~p ~n",
+                              [Err, Why, CurrData]),
                     Answer = <<"404 error">>,
                     ok = do_send(State,
                                  http_parser:response(Answer,
