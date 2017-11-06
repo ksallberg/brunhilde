@@ -14,7 +14,6 @@ to provide high performance or be used in production.
 
 # Dependencies:
 * rebar3 (https://www.rebar3.org/)
-* lager: fetched from rebar3
 * jsx: fetched from rebar3
 * erlydtl: fetched from rebar3
 

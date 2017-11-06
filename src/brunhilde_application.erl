@@ -66,7 +66,6 @@ start(_Type, _Args) ->
 do_start( StartObserver
         , UseReloader
         , Servers) ->
-    lager:start(),
     ssl:start(),
     Flags = mk_flags([ {StartObserver, ?START_OBSERVER}
                      , {UseReloader,   ?USE_RELOADER}

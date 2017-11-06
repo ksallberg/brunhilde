@@ -59,11 +59,11 @@ routes() ->
     , {'*', fun handle_wildcard/4}].
 
 handle_hello(_Data, Parameters, _Headers, _InstanceName) ->
-    lager:log(info, self(), "Someone asked for ~p", [Parameters]),
+    io:format("Someone asked for ~p", [Parameters]),
     #{<<"hello">> => <<"hello2u">>}.
 
 handle_error(_Data, _Parameters, _Headers, _InstanceName) ->
-    lager:log(error, self(), "some error!"),
+    io:format("some error!"),
     #{<<"hello">> => <<"error">>}.
 
 handle_html(_Data, _Parameters, _Headers, _InstanceName) ->
