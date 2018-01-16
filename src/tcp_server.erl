@@ -356,8 +356,6 @@ get_content_length(Headers) ->
                     Int
     end.
 
--compile(export_all).
-
 has_received_headers_end(Data) ->
     do_has_received_headers_end(Data).
 
