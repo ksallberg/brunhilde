@@ -30,3 +30,7 @@ dialyzer:
 test: build
 	lux test/
 .PHONY: test
+
+proper:
+	rebar3 proper
+.PHONY: proper
