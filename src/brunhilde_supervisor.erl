@@ -63,7 +63,7 @@ init([Servers, Flags]) ->
 
     SupFlags = #{strategy  => one_for_one,
                  intensity => 10,
-                 preiod    => 60},
+                 period    => 60},
 
     {ok, {SupFlags, [ TCPSup
                     , ReloaderSup]}}.

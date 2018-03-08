@@ -51,7 +51,7 @@ init([Servers, Flags]) ->
                    modules  => [tcp_server]}],
     SupFlags = #{strategy  => simple_one_for_one,
                  intensity => 10,
-                 preiod    => 60},
+                 period    => 60},
     {ok, {SupFlags, ChildSpec}}.
 
 start_server({#{server_name   := ServerName,
