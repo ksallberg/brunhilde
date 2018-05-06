@@ -41,19 +41,27 @@
          code_change/3]).
 
 % State while receiving bytes from the tcp socket
--record(state, { socket        :: port()                 %% client socket
-               , server        :: term()                 %% belongs to server
-               , flags         :: integer()              %% all flags
-               , addr          :: port() | undefined     %% client address
-               , data          :: string()               %% collected data
-               , body          :: string()               %% only the body
-               , body_length   :: integer()              %% total body length
-               , route         :: string()               %% route expressed
-                                                         %% as string()
-               , headers       :: [{string(), string()}] %% HTTP headers
-               , parameters    :: [{string(), string()}] %% GET parameters
-               , method        :: atom()                 %% method expressed as
-                                                         %% atom(), get, post
+-record(state, { %% client socket
+                 socket        :: port() | undefined
+                 %% belongs to server
+               , server        :: term()
+                 %% all flags
+               , flags         :: integer()
+                 %% client address
+               , addr          :: port() | undefined
+                 %% collected data
+               , data          :: string()
+                 %% only the body
+               , body          :: string() | undefined
+                 %% total body length
+               , body_length   :: integer()
+                 %% route expressed as string()
+               , route         :: string()
+                 %% HTTP headers
+               , headers       :: [{string(), string()}] | undefined
+                 %% GET parameters method expressed as atom(), get, post
+               , parameters    :: [{string(), string()}]
+               , method        :: atom()
                , transport     :: atom()
                }).
 
@@ -67,6 +75,7 @@ start_link(ListenSocket, Server, Flags, Transport) ->
                           [ListenSocket, Server, Flags, Transport],
                           []).
 
+-spec init([term()]) -> {ok, #state{}}.
 init([Socket, Server, Flags, Transport]) ->
     %% properly seeding the process
     <<A:32, B:32, C:32>> = crypto:strong_rand_bytes(12),
@@ -216,10 +225,10 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                                transport=http
                               }) ->
     SpawnFun = fun() ->
-            tcp_supervisor:start_socket(ListenSocket,
-                                        Server,
-                                        Flags,
-                                        http)
+                       tcp_supervisor:start_socket(ListenSocket,
+                                                   Server,
+                                                   Flags,
+                                                   http)
                end,
     case gen_tcp:accept(ListenSocket) of
         {ok, AcceptSocket} ->
@@ -278,7 +287,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                 {Err, Why} ->
                     io:format("tcp_server: Error ~p ~p ~p ~n",
                               [Err, Why, CurrData]),
-                    Answer = <<"404 error">>,
+                    Answer = "404 error",
                     ok = do_send(State,
                                  http_parser:response(Answer,
                                                       "",
@@ -348,12 +357,13 @@ terminate(_Reason, #state{} = State) ->
 code_change(_OldVsn, StateData, _Extra) ->
     {ok, StateData}.
 
--spec get_content_length([{string(), string()}]) -> integer().
+-spec get_content_length([tuple()]) -> integer().
 get_content_length(Headers) ->
-    case [Len || {"Content-Length", Len} <- Headers] of
-        []       -> 0;
-        [ConLen] -> {Int, _} = string:to_integer(ConLen),
-                    Int
+    case lists:keysearch("Content-Length", 1, Headers) of
+        false       -> 0;
+        {value, {_, ConLen}} ->
+            {Int, _} = string:to_integer(ConLen),
+            Int
     end.
 
 has_received_headers_end(Data) ->

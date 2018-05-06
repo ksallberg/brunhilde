@@ -37,7 +37,8 @@
 
 % Parse a request and return the
 % request, headers and body as a tuple
--spec parse_request(string()) -> {http_info(), [string()], string()}.
+-spec parse_request(string()) -> {http_info(), [string()], string()} |
+                                 {atom(), term()}. %% error case
 parse_request(R0) ->
     try
         {HttpInfo, R1}  = request_line(R0),
