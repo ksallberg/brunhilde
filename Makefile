@@ -20,12 +20,12 @@ servers: build
 	erlc -o priv/ servers/*.erl -pa _build/default/lib/brunhilde/ebin/
 .PHONY: servers
 
-# if no plt file:
-# dialyzer --build_plt --apps mnesia
-# dialyzer --add_to_plt ./_build/default/lib/brunhilde/
 dialyzer:
-	dialyzer --src src/
+	rebar3 dialyzer
 .PHONY: dialyzer
+
+xref:
+	rebar3 xref
 
 test: build
 	lux test/
