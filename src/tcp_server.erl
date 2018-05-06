@@ -357,7 +357,7 @@ terminate(_Reason, #state{} = State) ->
 code_change(_OldVsn, StateData, _Extra) ->
     {ok, StateData}.
 
--spec get_content_length([tuple()]) -> integer().
+-spec get_content_length([{string(), string()}]) -> integer().
 get_content_length(Headers) ->
     case lists:keysearch("Content-Length", 1, Headers) of
         false       -> 0;
