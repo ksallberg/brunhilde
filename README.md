@@ -1,4 +1,4 @@
-brunhilde (tested with Erlang OTP R19)
+brunhilde (tested with Erlang OTP R19, R20)
 =======
 
 ![alt tag](static/brunhilde.jpg)

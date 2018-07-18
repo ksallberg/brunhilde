@@ -37,8 +37,9 @@
 
 % Parse a request and return the
 % request, headers and body as a tuple
--spec parse_request(string()) -> {http_info(), [{string(), string()}], string()} |
-                                 {atom(), term()}. %% error case
+-spec parse_request(string()) ->
+                           {http_info(), [{string(), string()}], string()} |
+                           {atom(), term()}. %% error case
 parse_request(R0) ->
     try
         {HttpInfo, R1}  = request_line(R0),
@@ -103,7 +104,13 @@ headers(R0) ->
     NotColon = fun(Input) -> Input /= $: end,
     HeaderKey   = lists:takewhile(NotColon, Header0),
     %% Drop "xxxx: "
-    HeaderValue = tl(tl(lists:dropwhile(NotColon, Header0))),
+    AfterHeaderKey = tl(lists:dropwhile(NotColon, Header0)),
+    HeaderValue = case AfterHeaderKey of
+                      [] ->
+                          "";
+                      _ ->
+                          tl(AfterHeaderKey)
+                  end,
     {Rest,   R2} = headers(R1),
     {[{HeaderKey, HeaderValue}|Rest], R2}.
 

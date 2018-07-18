@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2016, Kristian Sällberg
+%% Copyright (c) 2014-2018, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -264,7 +264,7 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                     {noreply, S#state{socket=NewSocket}};
                 {error, Reason} ->
                     SpawnFun(),
-                    io:format("tcp_server: Error ~p~n", [Reason]),
+                    error_logger:error_msg("tcp_server: Error ~p~n", [Reason]),
                     %% We want to close the new socket, not the
                     %% listening socket
                     CloseState = S#state{socket=NewSocket},
@@ -272,7 +272,7 @@ handle_cast(accept, S = #state{socket=ListenSocket,
             end;
         {error, Reason} ->
             SpawnFun(),
-            io:format("tcp_server: Error ~p~n", [Reason]),
+            error_logger:error_msg("tcp_server: Error ~p~n", [Reason]),
             CloseState = S#state{socket=undefined},
             {stop, normal, CloseState}
     end;
@@ -285,8 +285,8 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
         true ->
             case http_parser:parse_request(CurrData) of
                 {Err, Why} ->
-                    io:format("tcp_server: Error ~p ~p ~p ~n",
-                              [Err, Why, CurrData]),
+                    error_logger:error_msg("tcp_server: Error ~p ~p ~p ~n",
+                                           [Err, Why, CurrData]),
                     Answer = "404 error",
                     ok = do_send(State,
                                  http_parser:response(Answer,
