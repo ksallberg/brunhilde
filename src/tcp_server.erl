@@ -258,10 +258,10 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                end,
     case ssl:transport_accept(ListenSocket) of
         {ok, NewSocket} ->
-            case ssl:ssl_accept(NewSocket) of
-                ok ->
+            case ssl:handshake(NewSocket) of
+                {ok, SslSocket} ->
                     SpawnFun(),
-                    {noreply, S#state{socket=NewSocket}};
+                    {noreply, S#state{socket=SslSocket}};
                 {error, Reason} ->
                     SpawnFun(),
                     error_logger:error_msg("tcp_server: Error ~p~n", [Reason]),
