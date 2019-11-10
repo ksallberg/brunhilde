@@ -6,3 +6,6 @@ _build
 erl_crash.dump
 *.swp
 .rebar
+ebin/brunhilde.app
+rebar.lock
+rebar3.crashdump
