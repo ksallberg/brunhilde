@@ -79,3 +79,10 @@ For example:
 
 # Supervisor tree:
 ![alt tag](static/sup_tree.png)
+
+# Publishing to hex
+
+1) Update the version number in src/brunhilde.app.src
+2) Push the tag to git
+3) "make build"
+4) rebar3 hex publish
