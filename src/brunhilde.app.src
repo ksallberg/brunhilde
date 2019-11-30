@@ -1,6 +1,6 @@
 {application, brunhilde,
  [ {description,  "Brunhilde is a minimal HTTP server."}
- , {vsn,          "1.6.2"}
+ , {vsn,          "1.6.3"}
  , {id,           "brunhilde"}
  , {modules,      [ http_parser
                   , http_handler
