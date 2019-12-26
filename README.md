@@ -1,16 +1,9 @@
-brunhilde (tested with Erlang OTP R19, R20)
+brunhilde (tested with Erlang OTP R21)
 =======
 
-![alt tag](static/brunhilde.jpg)
+brunhilde is a minimal Erlang/OTP web server.
 
-Serving many users concurrently is what brunhilde does
-for a living!
-
-brunhilde is a minimal (~715 LOC) Erlang/OTP web server,
-designed for rapid prototyping and hackathons/coding
-competitions. As simple as possible, so that it can
-quickly be modified or debugged. It is not designed
-to provide high performance or be used in production.
+It can be embedded, or used standalone.
 
 # Dependencies:
 * rebar3 (https://www.rebar3.org/)
