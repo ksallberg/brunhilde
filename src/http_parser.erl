@@ -1,4 +1,7 @@
-%% Copyright (c) 2014-2016, Kristian Sällberg
+%% Copyright (c) 2014-2020, Kristian Sällberg
+%%
+%% Based on course work from KTH ID2201
+%%
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -30,7 +33,8 @@
         , cookies/1
         , get_subdomain/1]).
 
--type method() :: 'delete' | 'get' | 'post' | 'put'.
+-type method() :: 'get' | 'head' | 'post' | 'put' |
+                  'delete' | 'connect' | 'options' | 'trace' | 'patch'.
 -type http_version() :: 'v10' | 'v11'.
 -type http_info() :: {method(), string(), [{atom(), atom()}], http_version()}.
 -type param() :: {string(), string()}.
@@ -49,15 +53,26 @@ parse_request(R0) ->
             {Err, Why}
     end.
 
+%% https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 -spec request_line(string()) -> {http_info(), string()}.
 request_line([$G, $E, $T, 32 | R0]) ->
     line_continue(get, R0);
-request_line([$P, $U, $T, 32 | R0]) ->
-    line_continue(put, R0);
+request_line([$H, $E, $A, $D, 32 | R0]) ->
+    line_continue(head, R0);
 request_line([$P, $O, $S, $T, 32 | R0]) ->
     line_continue(post, R0);
+request_line([$P, $U, $T, 32 | R0]) ->
+    line_continue(put, R0);
 request_line([$D, $E, $L, $E, $T, $E, 32 | R0]) ->
-    line_continue(delete, R0).
+    line_continue(delete, R0);
+request_line([$C, $O, $N, $N, $E, $C, $T, 32 | R0]) ->
+    line_continue(connect, R0);
+request_line([$O, $P, $T, $I, $O, $N, $S, 32 | R0]) ->
+    line_continue(options, R0);
+request_line([$T, $R, $A, $C, $E, 32 | R0]) ->
+    line_continue(trace, R0);
+request_line([$P, $A, $T, $C, $H, 32 | R0]) ->
+    line_continue(patch, R0).
 
 -spec throw_params(string()) -> string().
 throw_params(URI) ->
@@ -70,7 +85,7 @@ keep_params(URI) ->
         Ls -> parameters(lists:nthtail(1, Ls)) % first, remove the ? char
     end.
 
--spec line_continue(atom(), string()) -> {http_info(), string()}.
+-spec line_continue(method(), string()) -> {http_info(), string()}.
 line_continue(Method, R0) ->
     {URI, R1}     = request_uri(R0),
     {Ver, R2}     = http_version(R1),
