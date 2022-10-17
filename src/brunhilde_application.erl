@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2016, Kristian Sällberg
+%% Copyright (c) 2014-2022, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 
 -export([ start/2
         , stop/1
-        , do_start/3]).
+        , do_start/1]).
 
 -include("brunhilde.hrl").
 
@@ -41,44 +41,17 @@ start(_Type, _Args) ->
     case file:consult("brunhilde.conf") of
         {error, Reason} ->
             ?liof("Could not load brunhilde.conf: ~p~n", [Reason]),
-            StartObserver = false,
-            StartDebugger = false,
-            UseReloader   = false,
-            Servers       = [];
-        {ok, [#{start_observer := StartObserver,
-                start_debugger := StartDebugger,
-                use_reloader   := UseReloader,
-                servers        := Servers}]} ->
+            Servers = [];
+        {ok, [#{servers := Servers}]} ->
             ok
     end,
-    case StartDebugger of
-        false ->
-            do_start( StartObserver
-                    , UseReloader
-                    , Servers);
-        true ->
-            debugger:quick(?MODULE, do_start,
-                           [ StartObserver
-                           , UseReloader
-                           , Servers])
-    end.
+    do_start(Servers).
 
-do_start( StartObserver
-        , UseReloader
-        , Servers) ->
+do_start(Servers) ->
     ssl:start(),
-    Flags = mk_flags([ {StartObserver, ?START_OBSERVER}
-                     , {UseReloader,   ?USE_RELOADER}
-                     ]),
+    Flags = 0,
     brunhilde_supervisor:start_link(Servers, Flags).
 
 -spec stop(any()) -> ok.
 stop(_State) ->
     ok.
-
-mk_flags([]) ->
-    0;
-mk_flags([{true, Flag}|Rest]) ->
-    Flag bor mk_flags(Rest);
-mk_flags([{false, _}|Rest]) ->
-    mk_flags(Rest).

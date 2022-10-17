@@ -1,6 +1,6 @@
 {application, brunhilde,
  [ {description,  "Brunhilde is a minimal HTTP server."}
- , {vsn,          "1.6.3"}
+ , {vsn,          "2.0.0"}
  , {id,           "brunhilde"}
  , {modules,      [ http_parser
                   , http_handler
@@ -8,10 +8,8 @@
                   , brunhilde_supervisor
                   , tcp_server
                   , tcp_supervisor
-                  , reloader_server
                   , br_ext]}
- , {registered, [ tcp_supervisor
-                , tracker_server]}
+ , {registered, [ tcp_supervisor ]}
  , {applications, [kernel, stdlib]}
  , {mod, {brunhilde_application, []}}
  , {licenses, ["BSD-2-Clause"]}
@@ -24,7 +22,6 @@
            , "Makefile"
            , "rebar.config"
            , "servers"
-           , "static"
            ]}
  ]
 }.

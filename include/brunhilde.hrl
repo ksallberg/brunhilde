@@ -10,9 +10,11 @@
                           F band Fs == F
                   end).
 
--record(route, { protocol        :: atom()
+-type brunhilde_proto() :: html | file.
+
+-record(route, { protocol        :: brunhilde_proto()
                , verb            :: atom()
-               , address         :: string()
-               , subdomain = "*" :: string()
+               , address         :: binary()
+               , subdomain = '*' :: atom() | binary()
                , callback        :: term()
                }).

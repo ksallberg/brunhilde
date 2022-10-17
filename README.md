@@ -1,4 +1,4 @@
-brunhilde (tested with Erlang OTP R21)
+brunhilde
 =======
 
 brunhilde is a minimal Erlang/OTP web server.
@@ -7,8 +7,6 @@ It can be embedded, or used standalone.
 
 # Dependencies:
 * rebar3 (https://www.rebar3.org/)
-* jsx: fetched from rebar3
-* erlydtl: fetched from rebar3
 
 # Usage:
 
@@ -17,61 +15,11 @@ To start brunhilde standalone, do:
 make build start
 ```
 
-To embed brunhilde in another OTP application, see:
-[brunhilde_ext](https://github.com/ksallberg/brunhilde_ext).
-
-For an example of a small (but covering POST, GET, redirects, etc), see:
-[musiklistan](https://github.com/ksallberg/musiklistan).
-
+For an example of a site using brunhilde see:
+[purestyle](https://github.com/ksallberg/purestyle).
 
 # Dialyzer:
 make dialyzer (requires existing PLT)
-
-# Running virtual servers/apps:
-
-Virtual servers are defined in servers/ and have to use the
-rest_handler behaviour. Give a list of virtual servers to
-start in brunhilde.conf.
-
-For example:
-```erlang
-#{start_observer => false,
-  start_debugger => false,
-  use_reloader   => true,
-  servers =>
-   [ #{server_name   => battleship,
-       instance_name => battleship_serv,
-       port          => 28251,
-       workers       => 10,
-       transport     => http}
-
-   , #{server_name   => helloworld,
-       instance_name => helloworld_serv,
-       port          => 5030,
-       workers       => 5,
-       transport     => http}
-
-   , #{server_name   => helloworld,
-       instance_name => helloworld_serv2,
-       port          => 5031,
-       workers       => 10,
-       transport     => http}
-
-   , #{server_name   => secure,
-       instance_name => secure_serv,
-       port          => 4430,
-       workers       => 10,
-       transport     => {https,
-                        "cert.pem",
-                        "privkey.pem",
-                        "fullchain.pem"
-                        }
-      }
-   ]}.
-```
-
-# Supervisor tree:
-![alt tag](static/sup_tree.png)
 
 # Publishing to hex
 

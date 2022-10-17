@@ -1,80 +1,27 @@
 [doc Test basic servers included in the release]
 
-[shell cli]
+[shell brunhilde]
     !make -C ../ start
-    ???Erlrest started. Listening at port: 28251.
-    ???Erlrest started. Listening at port: 5030.
+    """???
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % brunhilde started. Listening at port: 5030. %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    """
 
-[shell queryprompt]
+[shell curl]
+    # GET request
     !curl localhost:5030
-    ???i dont know what youre saying
-    ?SH-PROMPT:
-    !curl http://localhost:5030/helloworld/hello/
-    ???{"hello":"hello2u"}
+    ???Error 404: i dont know what youre saying
     ?SH-PROMPT:
     !curl http://localhost:5030/helloworld.html
-    ???<html>  <head>     <title>Hello!</title>  </head>  <body>    <h1>Hello world!!!</h1>    <a href='/helloworld2.html'>Go somewhere</a>  </body></html>
-    ?SH-PROMPT:
-    !curl http://localhost:5030/helloworld/xml/
-    ???<?xml version="1.0"?><cheeses xmlns="http://cheese.com/names"><cheese><yarg><type>medium</type><country>nl</country></yarg></cheese></cheeses>
-    ?SH-PROMPT:
-    !curl http://localhost:5030/error
-    ???{"hello":"error"}
-    ?SH-PROMPT:
-    !curl http://localhost:5040/error
-    ???curl: (7) Failed to connect to localhost port 5040: Connection refused
+    ???<html>  <head>     <title>Hello!</title>  </head>  <body>    <h1>Hello world!!!</h1>  </body></html>
     ?SH-PROMPT:
 
-[shell battleship]
-    !python test.py
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/register/
-    http://localhost:28251/battleship/register/
-    {"status":"welcome"}
-    """
+    # POST request
+    !curl --data hej http://localhost:5030/handle_post
+    ??<html>  <head>     <title>Hello!</title>  </head>  <body>    <h1>Hello world!!!</h1>  </body></html>
+    ?SH-PROMPT:
 
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/register/
-    http://localhost:28251/battleship/register/
-    {"status":"welcome"}
-    """
-
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/shoot/
-    http://localhost:28251/battleship/shoot/
-    {"status":"ok, shot added"}
-    """
-
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/shoot/
-    http://localhost:28251/battleship/shoot/
-    {"status":"ok, shot added"}
-    """
-
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/radar/
-    http://localhost:28251/battleship/radar/
-    {"board":["----------","----------","-h--------","----------","----------","----------","----------","----------","----------","----------"],"won":"no"}
-    """
-
-    """???
-    Now looking at the reply (POST) from:  http://localhost:28251/battleship/radar/
-    http://localhost:28251/battleship/radar/
-    {"board":["----------","----------","----------","----------","----------","----m-----","----------","----------","----------","----------"],"won":"no"}
-    """
-
-    """???
-    Now looking at the reply (GET) from:  http://localhost:28251/battleship/info/
-    http://localhost:28251/battleship/info/
-    {"info_text":"This is a battleship game to show how to use erlrest"}
-    """
-
-    """???
-    Now looking at the reply (GET) from:  http://localhost:28251/battleship/radar_all/
-    http://localhost:28251/battleship/radar_all/
-    {"radar_all":[{"board":["--------o-","-o-o------","-h----oo--","-o--o-----","-o--o-o---","----------","--o-------","--o---ooo-","--o-------","---ooo----"],"finished":"no","player_name":"berra","shots":1},{"board":["--------o-","-o-o------","-o----oo--","-o--o-----","-o--o-o---","----m-----","--o-------","--o---ooo-","--o-------","---ooo----"],"finished":"no","player_name":"sara","shots":1}]}
-    """
-
-[shell cli]
+[shell brunhilde]
     !halt().
     ?SH-PROMPT:

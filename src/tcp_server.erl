@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Kristian Sällberg
+%% Copyright (c) 2014-2022, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,8 @@
 -behaviour(gen_server).
 
 -include("brunhilde.hrl").
--include_lib("xmerl/include/xmerl.hrl").
 
--export([start_link/4]).
+-export([start_link/4, has_received_headers_end/1]).
 -export([init/1,
          handle_call/3,
          handle_cast/2,
@@ -40,35 +39,36 @@
          terminate/2,
          code_change/3]).
 
-% State while receiving bytes from the tcp socket
+%% State while receiving bytes from the tcp socket
 -record(state, { %% client socket
-                 socket        :: port() | undefined
+                 socket        :: port() | undefined,
                  %% belongs to server
-               , server        :: term()
+                 server        :: term(),
                  %% all flags
-               , flags         :: integer()
+                 flags         :: integer(),
                  %% client address
-               , addr          :: port() | undefined
+                 addr          :: port() | undefined,
                  %% collected data
-               , data          :: string()
+                 data          :: binary(),
                  %% only the body
-               , body          :: string() | undefined
+                 body          :: binary() | undefined,
                  %% total body length
-               , body_length   :: integer()
+                 body_length   :: integer(),
                  %% route expressed as string()
-               , route         :: string()
+                 route         :: string(),
                  %% HTTP headers
-               , headers       :: [{string(), string()}] | undefined
-                 %% GET parameters method expressed as atom(), get, post
-               , parameters    :: [{string(), string()}]
-               , method        :: atom()
-               , transport     :: atom()
+                 headers       :: [{binary(), binary()}] | undefined,
+                 %% GET parameters method
+                 %% expressed as atom(), get, post
+                 parameters    :: [{binary(), binary()}],
+                 method        :: atom(),
+                 transport     :: atom()
                }).
 
 -type state() :: #state{}.
 
 -define(TIMEOUT, infinity).
--define(OKCODE, "200 OK").
+-define(OKCODE, <<"200 OK">>).
 
 start_link(ListenSocket, Server, Flags, Transport) ->
     gen_server:start_link(?MODULE,
@@ -86,7 +86,7 @@ init([Socket, Server, Flags, Transport]) ->
     {ok, #state{socket=Socket,
                 server=Server,
                 flags=Flags,
-                data="",
+                data= <<"">>,
                 body_length=-1,
                 route="unknown",
                 parameters=[],
@@ -94,13 +94,13 @@ init([Socket, Server, Flags, Transport]) ->
                }}.
 
 respond(#state{body = Body, data = _Data0, route = Route,
-                  method = Method, parameters = Parameters,
-                  headers = Headers, server = #{server_name := ServName,
-                                                instance_name := InstanceName}
-                 } = State) ->
+               method = Method, parameters = Parameters,
+               headers = Headers, server = #{server_name := ServName,
+                                             instance_name := InstanceName}
+              } = State) ->
     Routes = erlang:apply(ServName, routes, []),
     Data   = case Body of
-                 [] -> no_data;
+                 <<"">> -> no_data;
                  _  -> Body
              end,
     Subdomain = http_parser:get_subdomain(Headers),
@@ -111,8 +111,8 @@ respond(#state{body = Body, data = _Data0, route = Route,
                    , subdomain = XSubdomain
                    , callback = HandlerFun} <- Routes,
              Route == XRoute andalso
-             Method == XMethod andalso
-             Subdomain == XSubdomain] of
+                 Method == XMethod andalso
+                 Subdomain == XSubdomain] of
         [] ->
             Answer = case lists:keyfind('*', 1, Routes) of
                          false ->
@@ -122,83 +122,17 @@ respond(#state{body = Body, data = _Data0, route = Route,
                                          Headers, InstanceName)
                      end,
             ok = do_send(State,
-                         http_parser:response(Answer, "", "404 NOT FOUND"));
-        [{json, HandlerFun0}] ->
-            HandlerFun = mk_handler_fun(HandlerFun0),
-            Answer = case Data of
-                         no_data ->
-                             HandlerFun(no_data, Parameters,
-                                        Headers, InstanceName);
-                         _ ->
-                             JsonObj = jsx:decode(?l2b(Data), [return_maps]),
-                             HandlerFun(JsonObj, Parameters,
-                                        Headers, InstanceName)
-                     end,
-            {JsonReturn, ExtraHeaders, ReturnCode} =
-                case Answer of
-                    #{response      := Response,
-                      extra_headers := ExtraHeaders0,
-                      return_code   := ReturnCode0} ->
-                        {jsx:encode(Response), ExtraHeaders0, ReturnCode0};
-                    #{response      := Response,
-                      extra_headers := ExtraHeaders0} ->
-                        {jsx:encode(Response), ExtraHeaders0, ?OKCODE};
-                    _ ->
-                        {jsx:encode(Answer), "", ?OKCODE}
-                end,
-            ok = do_send(State, http_parser:response(JsonReturn,
-                                                     ExtraHeaders,
-                                                     ReturnCode));
-        [{xml, HandlerFun0}] ->
-            HandlerFun = mk_handler_fun(HandlerFun0),
-            Answer = case Data of
-                         no_data ->
-                             HandlerFun(no_data, Parameters,
-                                        Headers, InstanceName);
-                         _ ->
-                             {XmlObj, _Rest} = xmerl_scan:string(?l2b(Data)),
-                             HandlerFun(XmlObj, Parameters,
-                                        Headers, InstanceName)
-                     end,
-            {XmlReturn, ExtraHeaders, ReturnCode} =
-                case Answer of
-                    #{response      := Response,
-                      extra_headers := ExtraHeaders0,
-                      return_code   := ReturnCode0} ->
-                        {xmerl:export_simple(Response, xmerl_xml),
-                         ExtraHeaders0, ReturnCode0};
-                    #{response      := Response,
-                      extra_headers := ExtraHeaders0} ->
-                        {xmerl:export_simple(Response, xmerl_xml),
-                         ExtraHeaders0, ?OKCODE};
-                    _ ->
-                        {xmerl:export_simple(Answer, xmerl_xml), "", ?OKCODE}
-                end,
-            ok = do_send(State, http_parser:response(XmlReturn,
-                                                     ExtraHeaders,
-                                                     ReturnCode));
-        [{html, HandlerFun0}] ->
-            HandlerFun = mk_handler_fun(HandlerFun0),
+                         http_parser:response(Answer,
+                                              <<"">>,
+                                              <<"404 NOT FOUND">>));
+        [{html, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State);
-        [{file, HandlerFun0}] ->
-            HandlerFun = mk_handler_fun(HandlerFun0),
+        [{file, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
             ok     = handle_file_html(Answer, State)
     end,
     do_close(State).
-
-%% Subdomain handler fun
-mk_handler_fun({Mod, Fun}) ->
-    fun(JsonObj, Parameters, Headers, InstanceName) ->
-            erlang:apply(Mod, Fun, [JsonObj,
-                                    Parameters,
-                                    Headers,
-                                    InstanceName])
-    end;
-%% Fun already given
-mk_handler_fun(Fun) when is_function(Fun) ->
-    Fun.
 
 handle_file_html(Answer, State) ->
     {Return, ExtraHeaders, ReturnCode} =
@@ -211,25 +145,23 @@ handle_file_html(Answer, State) ->
               extra_headers := ExtraHeaders0} ->
                 {Response, ExtraHeaders0, ?OKCODE};
             _ ->
-                {Answer, "", ?OKCODE}
+                {Answer, <<"">>, ?OKCODE}
         end,
     do_send(State, http_parser:response(Return,
                                         ExtraHeaders,
                                         ReturnCode)).
 
 -spec handle_cast({data, string()} | timeout | {socket_ready, port()}, state())
-    -> {stop, normal, state()} | {noreply, state(), infinity}.
+                 -> {stop, normal, state()} | {noreply, state(), infinity}.
 handle_cast(accept, S = #state{socket=ListenSocket,
                                server=Server,
                                flags=Flags,
                                transport=http
                               }) ->
-    SpawnFun = fun() ->
-                       tcp_supervisor:start_socket(ListenSocket,
-                                                   Server,
-                                                   Flags,
-                                                   http)
-               end,
+    SpawnFun =
+        fun() ->
+                tcp_supervisor:start_socket(ListenSocket, Server, Flags, http)
+        end,
     case gen_tcp:accept(ListenSocket) of
         {ok, AcceptSocket} ->
             SpawnFun(),
@@ -279,7 +211,7 @@ handle_cast(accept, S = #state{socket=ListenSocket,
 
 %% Handle the actual client connecting and requesting something
 handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
-    CurrData = DBuf ++ Data,
+    CurrData = <<DBuf/binary, Data/binary>>,
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(CurrData) of
         true ->
@@ -287,11 +219,11 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                 {Err, Why} ->
                     error_logger:error_msg("tcp_server: Error ~p ~p ~p ~n",
                                            [Err, Why, CurrData]),
-                    Answer = "404 error",
+                    Answer = <<"404 error">>,
                     ok = do_send(State,
                                  http_parser:response(Answer,
-                                                      "",
-                                                      "404 NOT FOUND")),
+                                                      <<"">>,
+                                                      <<"404 NOT FOUND">>)),
                     {stop, normal, State};
                 {{Method, Route, Params, _HTTPVersion}, Headers, Body} ->
                     NewBL    = get_content_length(Headers),
@@ -303,7 +235,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                                            headers     = Headers,
                                            parameters  = Params,
                                            method      = Method},
-                    case NewBL == length(Body) of
+                    case NewBL == byte_size(Body) of
                         %% We received entire HTTP request
                         true ->
                             respond(NewState),
@@ -327,8 +259,8 @@ handle_call(Request, _From, State) ->
     {stop, {Request, undefined_event}, State}.
 
 -spec handle_info(any(), state() | port()) -> {noreply, state()} |
-                                              {stop, normal, state()} |
-                                              {noreply, state(), infinity}.
+          {stop, normal, state()} |
+          {noreply, state(), infinity}.
 handle_info({tcp, Sock, Bin}, #state{socket=Sock} = StateData) ->
     inet:setopts(Sock, [{active, once}]),
     ?MODULE:handle_cast({data, Bin}, StateData);
@@ -357,39 +289,34 @@ terminate(_Reason, #state{} = State) ->
 code_change(_OldVsn, StateData, _Extra) ->
     {ok, StateData}.
 
--spec get_content_length([{string(), string()}]) -> integer().
+-spec get_content_length([{binary(), binary()}]) -> integer().
 get_content_length(Headers) ->
-    case lists:keysearch("Content-Length", 1, Headers) of
-        false       -> 0;
+    case lists:keysearch(<<"Content-Length">>, 1, Headers) of
+        false ->
+            0;
         {value, {_, ConLen}} ->
-            {Int, _} = string:to_integer(ConLen),
-            Int
+            binary_to_integer(ConLen)
     end.
 
 has_received_headers_end(Data) ->
     do_has_received_headers_end(Data).
 
-do_has_received_headers_end([])        -> false;
-do_has_received_headers_end([_])       -> false;
-do_has_received_headers_end([_, _])    -> false;
-do_has_received_headers_end([_, _, _]) -> false;
-do_has_received_headers_end([13, 10, 13, 10 | _]) ->
+do_has_received_headers_end(X) when (byte_size(X) < 4) ->
+    false;
+do_has_received_headers_end(<<"\r\n\r\n", _More/binary>>) ->
     true;
-do_has_received_headers_end([_ | Xs]) ->
+do_has_received_headers_end(<<_X,Xs/binary>>) ->
     do_has_received_headers_end(Xs).
 
-do_send(#state{transport=http, socket=Socket}, Message) ->
+do_send(#state{transport=Transport, socket=Socket}, Message) ->
+    Mod = case Transport of
+              http -> gen_tcp;
+              https -> ssl
+          end,
     try
-        gen_tcp:send(Socket, Message)
+        Mod:send(Socket, Message)
     catch _:_ ->
-        error_logger:error_msg("~p Could not send to socket.~n", [self()])
-    end,
-    ok;
-do_send(#state{transport=https, socket=Socket}, Message) ->
-    try
-        ssl:send(Socket, Message)
-    catch _:_ ->
-        error_logger:error_msg("~p Could not send to socket.~n", [self()])
+            error_logger:error_msg("~p Could not send to socket.~n", [self()])
     end,
     ok.
 

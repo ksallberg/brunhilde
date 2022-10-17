@@ -1,8 +1,6 @@
-%% Copyright (c) 2014-2020, Kristian Sällberg
+%% Copyright (c) 2022, Kristian Sällberg
 %%
-%% Based on course work from KTH ID2201
-%%
-%% All rights reserved.
+% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
 %% modification, are permitted provided that the following conditions are met:
@@ -33,16 +31,20 @@
         , cookies/1
         , get_subdomain/1]).
 
+-include_lib("eunit/include/eunit.hrl").
+
 -type method() :: 'get' | 'head' | 'post' | 'put' |
                   'delete' | 'connect' | 'options' | 'trace' | 'patch'.
 -type http_version() :: 'v10' | 'v11'.
 -type http_info() :: {method(), string(), [{atom(), atom()}], http_version()}.
--type param() :: {string(), string()}.
+-type param() :: {binary(), binary()}.
+-type header() :: param().
+-type body() :: binary().
 
 % Parse a request and return the
 % request, headers and body as a tuple
 -spec parse_request(string()) ->
-                           {http_info(), [{string(), string()}], string()} |
+                           {http_info(), [header()], body()} |
                            {atom(), term()}. %% error case
 parse_request(R0) ->
     try
@@ -53,131 +55,169 @@ parse_request(R0) ->
             {Err, Why}
     end.
 
-%% https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
--spec request_line(string()) -> {http_info(), string()}.
-request_line([$G, $E, $T, 32 | R0]) ->
+-spec request_line(binary()) -> {http_info(), binary()}.
+request_line(<<"GET ", R0/binary>>) ->
     line_continue(get, R0);
-request_line([$H, $E, $A, $D, 32 | R0]) ->
+request_line(<<"HEAD ", R0/binary>>) ->
     line_continue(head, R0);
-request_line([$P, $O, $S, $T, 32 | R0]) ->
+request_line(<<"POST ", R0/binary>>) ->
     line_continue(post, R0);
-request_line([$P, $U, $T, 32 | R0]) ->
+request_line(<<"PUT ", R0/binary>>) ->
     line_continue(put, R0);
-request_line([$D, $E, $L, $E, $T, $E, 32 | R0]) ->
+request_line(<<"DELETE ", R0/binary>>) ->
     line_continue(delete, R0);
-request_line([$C, $O, $N, $N, $E, $C, $T, 32 | R0]) ->
+request_line(<<"CONNECT ", R0/binary>>) ->
     line_continue(connect, R0);
-request_line([$O, $P, $T, $I, $O, $N, $S, 32 | R0]) ->
+request_line(<<"OPTIONS", R0/binary>>) ->
     line_continue(options, R0);
-request_line([$T, $R, $A, $C, $E, 32 | R0]) ->
+request_line(<<"TRACE", R0/binary>>) ->
     line_continue(trace, R0);
-request_line([$P, $A, $T, $C, $H, 32 | R0]) ->
+request_line(<<"PATCH", R0>>) ->
     line_continue(patch, R0).
 
--spec throw_params(string()) -> string().
-throw_params(URI) ->
-    lists:takewhile(fun(X) -> X /= $? end, URI).
-
--spec keep_params(string()) -> [param()].
-keep_params(URI) ->
-    case lists:dropwhile(fun(X) -> X /= $? end, URI) of
-        [] -> []; %no GET parameters encountered
-        Ls -> parameters(lists:nthtail(1, Ls)) % first, remove the ? char
-    end.
-
--spec line_continue(method(), string()) -> {http_info(), string()}.
+-spec line_continue(method(), binary()) -> {http_info(), binary()}.
 line_continue(Method, R0) ->
-    {URI, R1}     = request_uri(R0),
-    {Ver, R2}     = http_version(R1),
-    [13, 10 | R3] = R2,
-    {{Method, throw_params(URI), keep_params(URI), Ver}, R3}.
+    {URI, R1} = request_uri(R0),
+    {Ver, R2} = http_version(R1),
+    <<13, 10, R3/binary>> = R2,
+    [Route, Params] = case binary:split(URI, <<"?">>) of
+                          [NoParams0, Params0] ->
+                              [NoParams0, parameters(Params0)];
+                          [NoParams0] ->
+                              [NoParams0, []]
+                      end,
+    {{Method, Route, Params, Ver}, R3}.
 
 % 32 is the last byte of the request uri (space), R0 is the last rest
--spec request_uri(string()) -> {string(), string()}.
-request_uri([32|R0]) ->
-    {[], R0};
-% intil 32 is found, keep adding the head element
+-spec request_uri(binary()) -> {binary(), binary()}.
+request_uri(<<" ",R0/binary>>) ->
+    {<<"">>, R0};
+% Until 32 is found, keep adding the head element
 % to the request_uri return list
-request_uri([C|R0]) ->
+request_uri(<<C,R0/binary>>) ->
     {Rest, R1} = request_uri(R0),
-    {[C | Rest], R1}.
+    {<<C, Rest/binary>>, R1}.
 
--spec http_version(string()) -> {atom(), string()}.
-http_version([$H, $T, $T, $P, $/, $1, $., $1 | R0]) ->
+-spec http_version(binary()) -> {atom(), binary()}.
+http_version(<<"HTTP/1.1", R0/binary>>) ->
     {v11, R0};
-http_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
+http_version(<<"HTTP/1.0", R0/binary>>) ->
     {v10, R0}.
 
-% recursively pick out all headers until
-% the stop "[13,10]" CRLF
--spec headers(string()) -> {[{string(), string()}], string()}.
-
-headers([13, 10 | R0]) ->
+%% recursively pick out all headers until the stop CRLF
+-spec headers(binary()) -> {[{binary(), binary()}], binary()}.
+headers(<<"\r\n", R0/binary>>) ->
     {[],R0};
 headers(R0) ->
     {Header0, R1} = header(R0),
-    NotColon = fun(Input) -> Input /= $: end,
-    HeaderKey   = lists:takewhile(NotColon, Header0),
-    %% Drop "xxxx: "
-    AfterHeaderKey = tl(lists:dropwhile(NotColon, Header0)),
-    HeaderValue = case AfterHeaderKey of
-                      [] ->
-                          "";
-                      _ ->
-                          tl(AfterHeaderKey)
-                  end,
-    {Rest,   R2} = headers(R1),
-    {[{HeaderKey, HeaderValue}|Rest], R2}.
+    [Key, Value0] = binary:split(Header0, <<":">>),
+    Value1 = case Value0 of
+                 <<" ", ValueRest/binary>> ->
+                     ValueRest;
+                 _ ->
+                     Value0
+             end,
+    {Rest, R2} = headers(R1),
+    {[{Key, Value1}|Rest], R2}.
 
 % take everything until [13,10]
 % return that, and the rest of the list
 % recursively pick out one header CRLF
--spec header(string()) -> {string(), string()}.
-header([13, 10 | R0]) ->
-    {[], R0};
-header([C|R0]) ->
+-spec header(binary()) -> {binary(), binary()}.
+header(<<"\r\n", R0/binary>>) ->
+    {<<>>, R0};
+header(<<C,R0/binary>>) ->
     {Rest, R1} = header(R0),
-    {[C|Rest], R1}.
+    {<<C,Rest/binary>>, R1}.
 
--spec parameters(string()) -> [param()].
+-spec parameters(binary()) -> [param()].
 parameters(Ls) ->
-    {Parameter, Rest} = parameter(Ls),
-    case Rest of
-        [] -> [Parameter];
-        _  -> [Parameter] ++ parameters(lists:nthtail(1,Rest))
-    end.
-
--spec parameter(string()) -> {param(), string()}.
-parameter(Ls) ->
-    {Name, Rest}     = lists:splitwith(fun(X) -> X /= $= end, Ls),
-    {Content, Rest2} = lists:splitwith(fun(X) -> X /= $& end,
-                                       lists:nthtail(1,Rest)), % drop = char
-    {{Name, Content}, Rest2}.
+    Params = binary:split(Ls, <<"&">>, [global]),
+    lists:map(fun(Param) ->
+                      [Key, Val] = binary:split(Param, <<"=">>),
+                      {Key, Val}
+              end, Params).
 
 cookies(CookieString) ->
-    Cs = re:split(CookieString, "; ", [{return, list}]),
-    lists:map(fun(X) ->
-                      [A, B] = re:split(X, "=", [{return, list}]),
+    Cs = binary:split(CookieString, <<"; ">>, [global]),
+    lists:map(fun(KeyVal) ->
+                      [A, B] = binary:split(KeyVal, <<"=">>),
                       {A, B}
               end, Cs).
 
 get_subdomain(Headers) ->
-    Host = proplists:get_value("Host", Headers),
+    Host = proplists:get_value(<<"Host">>, Headers),
     case Host of
         undefined ->
-            "*";
+            '*';
         _ ->
-            case string:tokens(Host, ".") of
+            case binary:split(Host, <<".">>, [global]) of
                 [Subdomain, _Domain, _Rest] ->
                     Subdomain;
                 _ ->
-                    "*"
+                    '*'
             end
     end.
 
 %% for now always send access-control-allow
--spec response(string(), string(), string()) -> string().
+-spec response(binary(), binary(), binary()) -> binary().
 response(Body, ExtraHeaders, ReturnCode) ->
-    "HTTP/1.1 " ++ ReturnCode ++ "\r\n" ++
-    "Access-Control-Allow-Origin: *\r\n" ++
-    ExtraHeaders ++ "\r\n" ++ Body.
+    Proto = <<"HTTP/1.1 ">>,
+    CRLF = <<"\r\n">>,
+    AccessControl = <<"Access-Control-Allow-Origin: *\r\n">>,
+    <<Proto/binary, ReturnCode/binary, CRLF/binary, AccessControl/binary,
+      ExtraHeaders/binary, CRLF/binary, Body/binary>>.
+
+-ifdef(EUNIT).
+
+parameters_test() ->
+    ?assertEqual(http_parser:parameters(<<"username=apa&password=apa">>),
+                 [{<<"username">>, <<"apa">>},
+                  {<<"password">>, <<"apa">>}]).
+
+post_test() ->
+    Res =
+        http_parser:parse_request(<<"POST /register_post HTTP/1.1\r\nHost: localhost:8000\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate, br\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 25\r\nOrigin: http://localhost:8000\r\nConnection: keep-alive\r\nReferer: http://localhost:8000/register\r\nUpgrade-Insecure-Requests: 1\r\nSec-Fetch-Dest: document\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-User: ?1\r\n\r\nusername=apa&password=apa">>),
+    Expect = {{post,<<"/register_post">>,[],v11},
+              [{<<"Host">>,<<"localhost:8000">>},
+               {<<"User-Agent">>,
+                <<"Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0">>},
+               {<<"Accept">>,
+                <<"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8">>},
+               {<<"Accept-Language">>,<<"en-US,en;q=0.5">>},
+               {<<"Accept-Encoding">>,<<"gzip, deflate, br">>},
+               {<<"Content-Type">>,<<"application/x-www-form-urlencoded">>},
+               {<<"Content-Length">>,<<"25">>},
+               {<<"Origin">>,<<"http://localhost:8000">>},
+               {<<"Connection">>,<<"keep-alive">>},
+               {<<"Referer">>,<<"http://localhost:8000/register">>},
+               {<<"Upgrade-Insecure-Requests">>,<<"1">>},
+               {<<"Sec-Fetch-Dest">>,<<"document">>},
+               {<<"Sec-Fetch-Mode">>,<<"navigate">>},
+               {<<"Sec-Fetch-Site">>,<<"same-origin">>},
+               {<<"Sec-Fetch-User">>,<<"?1">>}],
+              <<"username=apa&password=apa">>},
+    ?assertEqual(Res, Expect).
+
+get_test() ->
+    Res = http_parser:parse_request(<<"GET /?apa=mapa&fapa=dapa HTTP/1.1\r\nHost: localhost:5030\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.5\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nCookie: username=5sCeEIvQggnFn3JjN0ua5SYvE9k%3D\r\nUpgrade-Insecure-Requests: 1\r\nSec-Fetch-Dest: document\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Site: cross-site\r\n\r\n">>),
+    Expect = {{get,<<"/">>,
+               [{<<"apa">>,<<"mapa">>},{<<"fapa">>,<<"dapa">>}],
+               v11},
+              [{<<"Host">>,<<"localhost:5030">>},
+               {<<"User-Agent">>,
+                <<"Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0">>},
+               {<<"Accept">>,
+                <<"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8">>},
+               {<<"Accept-Language">>,<<"en-US,en;q=0.5">>},
+               {<<"Accept-Encoding">>,<<"gzip, deflate, br">>},
+               {<<"Connection">>,<<"keep-alive">>},
+               {<<"Cookie">>,<<"username=5sCeEIvQggnFn3JjN0ua5SYvE9k%3D">>},
+               {<<"Upgrade-Insecure-Requests">>,<<"1">>},
+               {<<"Sec-Fetch-Dest">>,<<"document">>},
+               {<<"Sec-Fetch-Mode">>,<<"navigate">>},
+               {<<"Sec-Fetch-Site">>,<<"cross-site">>}],
+              <<>>},
+    ?assertEqual(Res, Expect).
+
+-endif.

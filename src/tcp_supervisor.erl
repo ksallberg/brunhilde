@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2016, Kristian Sällberg
+%% Copyright (c) 2014-2022, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -58,49 +58,38 @@ start_server({#{server_name   := ServerName,
                 instance_name := InstanceName,
                 port          := Port,
                 workers       := Workers,
-                transport     := Transport
+                transport     := Transport0
                } = Server,
               Flags}) ->
     emit_terminal_box(Port),
     %% Initialize the server
     erlang:apply(ServerName, init, [InstanceName]),
-    case Transport of
-        http ->
-            {ok, ListenSocket} = gen_tcp:listen(Port,
-                                                [ list
-                                                , {packet, 0}
-                                                , {reuseaddr, true}
-                                                , {keepalive, true}
-                                                , {backlog, 30}]
-                                               ),
-            SpawnFun = fun() ->
-                               [start_socket(ListenSocket, Server, Flags, http)
-                                || _ <- lists:seq(1, Workers)],
-                               ok
-                       end,
-            spawn_link(SpawnFun);
-        {https, CertFile, PrivkeyFile, ChainFile} ->
-            {ok, ListenSocket} = ssl:listen(Port,
-                                            [ {reuseaddr, true}
-                                            , {certfile, CertFile}
-                                            , {keyfile, PrivkeyFile}
-                                            , {cacertfile, ChainFile}
-                                            , {keepalive, true}]
-                                           ),
-            SpawnFun = fun() ->
-                               [start_socket(ListenSocket, Server, Flags, https)
-                                || _ <- lists:seq(1, Workers)],
-                               ok
-                       end,
-            spawn_link(SpawnFun)
-    end.
+    {Mod, Opts, Transport} =
+        case Transport0 of
+            http ->
+                {gen_tcp, [binary, {reuseaddr, true}, {keepalive, true}], http};
+            {https, CertFile, PrivkeyFile, ChainFile} ->
+                {ssl, [binary, {reuseaddr, true}, {keepalive, true},
+                       {certfile, CertFile}, {keyfile, PrivkeyFile},
+                       {cacertfile, ChainFile}], https}
+        end,
+    {ok, ListenSocket} = Mod:listen(Port, Opts),
+    SpawnFun =
+        fun() ->
+                lists:foreach(
+                  fun(_) ->
+                          start_socket(ListenSocket, Server, Flags, Transport)
+                  end,
+                  lists:seq(1, Workers))
+        end,
+    spawn_link(SpawnFun).
 
 start_socket(ListenSocket, Server, Flags, Transport) ->
     supervisor:start_child(?MODULE, [ListenSocket, Server, Flags, Transport]).
 
 emit_terminal_box(Port) ->
     PortStr = lists:flatten(io_lib:format("~p", [Port])),
-    Msg = lists:flatten(io_lib:format("% Erlrest started. "
+    Msg = lists:flatten(io_lib:format("% brunhilde started. "
                                       "Listening at port: ~s. %", [PortStr])),
     Line = [$% || _ <- lists:seq(1, length(Msg))],
     io:format("~n~s~n", [Line]),

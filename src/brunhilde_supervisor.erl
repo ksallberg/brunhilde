@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2016, Kristian Sällberg
+%% Copyright (c) 2014-2022, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,7 @@
 %% Top level supervisor.
 
 -module(brunhilde_supervisor).
+
 -behavior(supervisor).
 
 -include("brunhilde.hrl").
@@ -34,28 +35,11 @@
         , init/1]).
 
 start_link(Servers, Flags) ->
-    case ?flag_set(?START_OBSERVER, Flags) of
-        true ->
-            observer:start();
-        false ->
-            ok
-    end,
     supervisor:start_link({local, ?MODULE}, ?MODULE, [Servers, Flags]).
 
 init([Servers, Flags]) ->
-    ReloaderSup = #{id       => rest_reloader_supervisor,
-                    start    => {reloader_server,
-                                 start_link,
-                                 [Servers, Flags]},
-                    restart  => permanent,
-                    shutdown => 1000,
-                    type     => worker,
-                    modules  => [reloader_server]},
-
-    TCPSup = #{id       => rest_tcp_supervisor,
-               start    => {tcp_supervisor,
-                            start_link,
-                            [Servers, Flags]},
+    TCPSup = #{id       => tcp_supervisor,
+               start    => {tcp_supervisor, start_link, [Servers, Flags]},
                restart  => permanent,
                shutdown => 1000,
                type     => supervisor,
@@ -65,5 +49,4 @@ init([Servers, Flags]) ->
                  intensity => 10,
                  period    => 60},
 
-    {ok, {SupFlags, [ TCPSup
-                    , ReloaderSup]}}.
+    {ok, {SupFlags, [TCPSup]}}.

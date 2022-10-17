@@ -29,6 +29,7 @@ xref:
 
 test: build
 	lux test/
+	rebar3 eunit
 .PHONY: test
 
 proper:
