@@ -105,11 +105,11 @@ respond(#state{body = Body, data = _Data0, route = Route,
              end,
     Subdomain = http_parser:get_subdomain(Headers),
     case [{Proto, HandlerFun} ||
-             #route{ protocol = Proto
-                   , verb = XMethod
-                   , address = XRoute
-                   , subdomain = XSubdomain
-                   , callback = HandlerFun} <- Routes,
+             #route{protocol = Proto,
+                    verb = XMethod,
+                    address = XRoute,
+                    subdomain = XSubdomain,
+                    callback = HandlerFun} <- Routes,
              Route == XRoute andalso
                  Method == XMethod andalso
                  Subdomain == XSubdomain] of
@@ -210,15 +210,31 @@ handle_cast(accept, S = #state{socket=ListenSocket,
     end;
 
 %% Handle the actual client connecting and requesting something
-handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
-    CurrData = <<DBuf/binary, Data/binary>>,
-    %% When the HTTP request headers have been fully received
-    case has_received_headers_end(CurrData) of
+%%
+%% Waiting for more body data:
+handle_cast({data, Data}, #state{body_length = BL, body = Body} = State)
+  when BL > 0 ->
+    NewBody = <<Body/binary, Data/binary>>,
+    NewState = State#state{body=NewBody},
+    case byte_size(NewBody) == BL of
+        %% We received entire HTTP request
         true ->
-            case http_parser:parse_request(CurrData) of
+            respond(NewState),
+            {stop, normal, NewState};
+        %% No, wait for more
+        false ->
+            {noreply, NewState, ?TIMEOUT}
+    end;
+%% Waiting for headers and body
+handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
+    NewData = <<DBuf/binary, Data/binary>>,
+    %% When the HTTP request headers have been fully received
+    case has_received_headers_end(NewData) of
+        true ->
+            case http_parser:parse_request(NewData) of
                 {Err, Why} ->
                     error_logger:error_msg("tcp_server: Error ~p ~p ~p ~n",
-                                           [Err, Why, CurrData]),
+                                           [Err, Why, NewData]),
                     Answer = <<"404 error">>,
                     ok = do_send(State,
                                  http_parser:response(Answer,
@@ -226,16 +242,16 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                                                       <<"404 NOT FOUND">>)),
                     {stop, normal, State};
                 {{Method, Route, Params, _HTTPVersion}, Headers, Body} ->
-                    NewBL    = get_content_length(Headers),
+                    NewBL = get_content_length(Headers),
                     NewRoute = Route,
-                    NewState = State#state{data        = CurrData,
+                    NewState = State#state{data        = NewData,
                                            body        = Body,
                                            body_length = NewBL,
                                            route       = NewRoute,
                                            headers     = Headers,
                                            parameters  = Params,
                                            method      = Method},
-                    case NewBL == byte_size(Body) of
+                    case byte_size(Body) == NewBL of
                         %% We received entire HTTP request
                         true ->
                             respond(NewState),
@@ -246,7 +262,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = _BL} = State) ->
                     end
             end;
         false ->
-            NewState = State#state{data = CurrData},
+            NewState = State#state{data = NewData},
             {noreply, NewState, ?TIMEOUT}
     end;
 

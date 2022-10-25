@@ -68,11 +68,11 @@ request_line(<<"DELETE ", R0/binary>>) ->
     line_continue(delete, R0);
 request_line(<<"CONNECT ", R0/binary>>) ->
     line_continue(connect, R0);
-request_line(<<"OPTIONS", R0/binary>>) ->
+request_line(<<"OPTIONS ", R0/binary>>) ->
     line_continue(options, R0);
-request_line(<<"TRACE", R0/binary>>) ->
+request_line(<<"TRACE ", R0/binary>>) ->
     line_continue(trace, R0);
-request_line(<<"PATCH", R0>>) ->
+request_line(<<"PATCH ", R0/binary>>) ->
     line_continue(patch, R0).
 
 -spec line_continue(method(), binary()) -> {http_info(), binary()}.
