@@ -159,13 +159,11 @@ get_subdomain(Headers) ->
             end
     end.
 
-%% for now always send access-control-allow
 -spec response(binary(), binary(), binary()) -> binary().
 response(Body, ExtraHeaders, ReturnCode) ->
     Proto = <<"HTTP/1.1 ">>,
     CRLF = <<"\r\n">>,
-    AccessControl = <<"Access-Control-Allow-Origin: *\r\n">>,
-    <<Proto/binary, ReturnCode/binary, CRLF/binary, AccessControl/binary,
+    <<Proto/binary, ReturnCode/binary, CRLF/binary,
       ExtraHeaders/binary, CRLF/binary, Body/binary>>.
 
 -ifdef(EUNIT).
