@@ -133,7 +133,7 @@ respond(#state{body = Body, data = _Data0, route = Route,
             ok     = handle_file_html(Answer, State);
         _ ->
             ok = do_send(State,
-                         http_parser:response(Answer,
+                         http_parser:response(<<"">>,
                                               <<"">>,
                                               <<"505 internal server error">>))
     end,
