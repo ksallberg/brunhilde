@@ -130,7 +130,12 @@ respond(#state{body = Body, data = _Data0, route = Route,
             ok     = handle_file_html(Answer, State);
         [{file, HandlerFun}] ->
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
-            ok     = handle_file_html(Answer, State)
+            ok     = handle_file_html(Answer, State);
+        _ ->
+            ok = do_send(State,
+                         http_parser:response(Answer,
+                                              <<"">>,
+                                              <<"505 internal server error">>))
     end,
     do_close(State).
 
