@@ -201,7 +201,8 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                     {noreply, S#state{socket=SslSocket}};
                 {error, Reason} ->
                     SpawnFun(),
-                    error_logger:error_msg("tcp_server: Error ~p~n", [Reason]),
+                    logger:error("tcp_server: Error "
+                                 "during SSL handshake ~p~n", [Reason]),
                     %% We want to close the new socket, not the
                     %% listening socket
                     CloseState = S#state{socket=NewSocket},
@@ -209,7 +210,8 @@ handle_cast(accept, S = #state{socket=ListenSocket,
             end;
         {error, Reason} ->
             SpawnFun(),
-            error_logger:error_msg("tcp_server: Error ~p~n", [Reason]),
+            logger:error("tcp_server: Error during "
+                         "transport accept ~p~n", [Reason]),
             CloseState = S#state{socket=undefined},
             {stop, normal, CloseState}
     end;
@@ -238,8 +240,8 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
         true ->
             case http_parser:parse_request(NewData) of
                 {Err, Why} ->
-                    error_logger:error_msg("tcp_server: Error ~p ~p ~p ~n",
-                                           [Err, Why, NewData]),
+                    logger:info("tcp_server: Error ~p ~p ~p ~n",
+                                [Err, Why, NewData]),
                     Answer = <<"404 error">>,
                     ok = do_send(State,
                                  http_parser:response(Answer,
@@ -272,7 +274,7 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
     end;
 
 handle_cast(timeout, State) ->
-    error_logger:error_msg("~p Client connection timeout.~n", [self()]),
+    logger:error("~p Client connection timeout.~n", [self()]),
     {stop, normal, State}.
 
 -spec handle_call(any(), {pid(), any()}, state()) -> {stop, tuple(), state()}.
@@ -337,7 +339,7 @@ do_send(#state{transport=Transport, socket=Socket}, Message) ->
     try
         Mod:send(Socket, Message)
     catch _:_ ->
-            error_logger:error_msg("~p Could not send to socket.~n", [self()])
+            logger:error("~p Could not send to socket.~n", [self()])
     end,
     ok.
 
