@@ -32,5 +32,5 @@
 %% init gets the server's instance name as input
 -callback init(atom()) -> atom().
 
-%% protocol, verb, address, callback
+%% verb, address, callback
 -callback routes() -> [#route{}].

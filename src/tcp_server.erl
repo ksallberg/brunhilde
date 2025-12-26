@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2022, Kristian Sällberg
+%% Copyright (c) 2014-2025, Kristian Sällberg
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,17 @@ init([Socket, Server, Flags, Transport]) ->
                 transport=Transport
                }}.
 
+match_route([], _Method, _Route, _Subdomain) ->
+    {error, no_match};
+match_route([#route{verb = Method,
+                    address = Route,
+                    subdomain = Subdomain,
+                    callback = HandlerFun} | _Routes],
+            Method, Route, Subdomain) ->
+    {ok, HandlerFun};
+match_route([_Route|Routes], Method, Route, Subdomain) ->
+    match_route(Routes, Method, Route, Subdomain).
+
 respond(#state{body = Body, data = _Data0, route = Route,
                method = Method, parameters = Parameters,
                headers = Headers, server = #{server_name := ServName,
@@ -104,16 +115,8 @@ respond(#state{body = Body, data = _Data0, route = Route,
                  _  -> Body
              end,
     Subdomain = http_parser:get_subdomain(Headers),
-    case [{Proto, HandlerFun} ||
-             #route{protocol = Proto,
-                    verb = XMethod,
-                    address = XRoute,
-                    subdomain = XSubdomain,
-                    callback = HandlerFun} <- Routes,
-             Route == XRoute andalso
-                 Method == XMethod andalso
-                 Subdomain == XSubdomain] of
-        [] ->
+    case match_route(Routes, Method, Route, Subdomain) of
+        {error, no_match} ->
             Answer = case lists:keyfind('*', 1, Routes) of
                          false ->
                              <<"404 error">>;
@@ -125,21 +128,13 @@ respond(#state{body = Body, data = _Data0, route = Route,
                          http_parser:response(Answer,
                                               <<"">>,
                                               <<"404 NOT FOUND">>));
-        [{html, HandlerFun}] ->
+        {ok, HandlerFun} ->
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
-            ok     = handle_file_html(Answer, State);
-        [{file, HandlerFun}] ->
-            Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
-            ok     = handle_file_html(Answer, State);
-        _ ->
-            ok = do_send(State,
-                         http_parser:response(<<"">>,
-                                              <<"">>,
-                                              <<"505 internal server error">>))
+            ok = handle_response(Answer, State)
     end,
     do_close(State).
 
-handle_file_html(Answer, State) ->
+handle_response(Answer, State) ->
     {Return, ExtraHeaders, ReturnCode} =
         case Answer of
             #{response      := Response,
@@ -149,7 +144,7 @@ handle_file_html(Answer, State) ->
             #{response      := Response,
               extra_headers := ExtraHeaders0} ->
                 {Response, ExtraHeaders0, ?OKCODE};
-            _ ->
+            Bin when is_binary(Bin) ->
                 {Answer, <<"">>, ?OKCODE}
         end,
     do_send(State, http_parser:response(Return,
@@ -250,11 +245,10 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
                     {stop, normal, State};
                 {{Method, Route, Params, _HTTPVersion}, Headers, Body} ->
                     NewBL = get_content_length(Headers),
-                    NewRoute = Route,
                     NewState = State#state{data        = NewData,
                                            body        = Body,
                                            body_length = NewBL,
-                                           route       = NewRoute,
+                                           route       = Route,
                                            headers     = Headers,
                                            parameters  = Params,
                                            method      = Method},

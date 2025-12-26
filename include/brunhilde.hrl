@@ -3,18 +3,11 @@
 -define(b2l(V), binary_to_list(V)).
 -define(a2l(V), atom_to_list(V)).
 
--define(START_OBSERVER, 1 bsl 1).
--define(USE_RELOADER,   1 bsl 2).
+-type handler_fun() ::
+    fun((binary(), [binary()], [binary()], atom()) -> binary() | map()).
 
--define(flag_set, fun(F, Fs) ->
-                          F band Fs == F
-                  end).
-
--type brunhilde_proto() :: html | file.
-
--record(route, { protocol        :: brunhilde_proto()
-               , verb            :: atom()
+-record(route, { verb            :: atom()
                , address         :: binary()
                , subdomain = '*' :: atom() | binary()
-               , callback        :: term()
+               , callback        :: handler_fun()
                }).

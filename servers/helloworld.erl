@@ -14,13 +14,11 @@ init(InstanceName) ->
     ok.
 
 routes() ->
-    [#route{protocol = html,
-            verb = get,
+    [#route{verb = get,
             address = <<"/helloworld.html">>,
             callback = fun handle_html/4},
 
-     #route{protocol = html,
-            verb = post,
+     #route{verb = post,
             address = <<"/handle_post">>,
             callback = fun handle_post/4},
 
