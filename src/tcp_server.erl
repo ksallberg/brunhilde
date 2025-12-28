@@ -227,11 +227,25 @@ handle_cast(accept, S = #state{socket=ListenSocket,
             {stop, normal, CloseState}
     end;
 
+handle_cast(timeout, State) ->
+    logger:error("~p Client connection timeout.~n", [self()]),
+    {stop, normal, State}.
+
+-spec handle_call(any(), {pid(), any()}, state()) -> {stop, tuple(), state()}.
+handle_call(Request, _From, State) ->
+    {stop, {Request, undefined_event}, State}.
+
+-spec handle_info(any(), state() | port()) -> {noreply, state()} |
+          {stop, normal, state()} |
+          {noreply, state(), infinity}.
+
 %% Handle the actual client connecting and requesting something
 %%
 %% Waiting for more body data:
-handle_cast({data, Data}, #state{body_length = BL, body = Body} = State)
-  when BL > 0 ->
+handle_info({Proto, _Sock, Data},
+            #state{body_length = BL, body = Body} = State)
+  when BL > 0 andalso
+       (Proto == tcp orelse Proto == ssl) ->
     NewBody = <<Body/binary, Data/binary>>,
     NewState = State#state{body=NewBody},
     case byte_size(NewBody) == BL of
@@ -244,7 +258,9 @@ handle_cast({data, Data}, #state{body_length = BL, body = Body} = State)
             {noreply, NewState, ?TIMEOUT}
     end;
 %% Waiting for headers and body
-handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
+handle_info({Proto, _Sock, Data},
+            #state{data = DBuf, body_length = -1} = State)
+  when Proto == tcp orelse Proto == ssl ->
     NewData = <<DBuf/binary, Data/binary>>,
     %% When the HTTP request headers have been fully received
     case has_received_headers_end(NewData) of
@@ -282,24 +298,6 @@ handle_cast({data, Data}, #state{data = DBuf, body_length = -1} = State) ->
             NewState = State#state{data = NewData},
             {noreply, NewState, ?TIMEOUT}
     end;
-
-handle_cast(timeout, State) ->
-    logger:error("~p Client connection timeout.~n", [self()]),
-    {stop, normal, State}.
-
--spec handle_call(any(), {pid(), any()}, state()) -> {stop, tuple(), state()}.
-handle_call(Request, _From, State) ->
-    {stop, {Request, undefined_event}, State}.
-
--spec handle_info(any(), state() | port()) -> {noreply, state()} |
-          {stop, normal, state()} |
-          {noreply, state(), infinity}.
-handle_info({tcp, Sock, Bin}, #state{socket=Sock} = StateData) ->
-    inet:setopts(Sock, [{active, once}]),
-    ?MODULE:handle_cast({data, Bin}, StateData);
-
-handle_info({ssl, _Sock, Bin}, StateData) ->
-    ?MODULE:handle_cast({data, Bin}, StateData);
 
 handle_info({tcp_closed, Socket},
             #state{socket=Socket} = StateData) ->
