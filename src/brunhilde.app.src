@@ -1,14 +1,13 @@
 {application, brunhilde,
  [ {description,  "Brunhilde is a minimal HTTP server."}
- , {vsn,          "2.0.1"}
+ , {vsn,          "2.0.7"}
  , {id,           "brunhilde"}
  , {modules,      [ http_parser
                   , http_handler
                   , brunhilde_application
                   , brunhilde_supervisor
                   , tcp_server
-                  , tcp_supervisor
-                  , br_ext]}
+                  , tcp_supervisor]}
  , {registered, [ tcp_supervisor ]}
  , {applications, [kernel, stdlib]}
  , {mod, {brunhilde_application, []}}
