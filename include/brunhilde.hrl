@@ -6,7 +6,8 @@
 -type handler_fun() ::
     fun((binary(), [binary()], [binary()], atom()) -> binary() | map()).
 
--record(route, { verb            :: atom()
+-record(route, { type = plain    :: 'plain' | 'regex'
+               , verb            :: atom()
                , address         :: binary()
                , subdomain = '*' :: atom() | binary()
                , callback        :: handler_fun()

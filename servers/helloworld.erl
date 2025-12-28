@@ -22,6 +22,11 @@ routes() ->
             address = <<"/handle_post">>,
             callback = fun handle_post/4},
 
+     #route{type = regex,
+            verb = get,
+            address = <<"^/regex/([0-9]+)/apa/([0-9]+)$">>,
+            callback = fun handle_regex/5},
+
      {'*', fun handle_wildcard/4}
     ].
 
@@ -44,6 +49,23 @@ handle_post(_Data, _Parameters, _Headers, _InstanceName) ->
            "  <body>"
            "    <h1>Hello world!!!</h1>"
            "  </body>"
+           "</html>",
+    ?l2b(Html).
+
+handle_regex(_Data, _Parameters, _Headers, _InstanceName, MatchGroups) ->
+    io:format("MatchGroups! ~p~n", [MatchGroups]),
+    [_Full, A, B] = MatchGroups,
+    Html = "<html>"
+           "  <head>"
+           "     <title>Regex!</title>"
+           "  </head>"
+           "  <body>"
+           "    <h1>Hello!!!</h1>"
+           ++
+           "<p>first number: " ++ A ++
+           "</p><p>second number: " ++ B
+           ++
+           "</p>  </body>"
            "</html>",
     ?l2b(Html).
 

@@ -95,6 +95,18 @@ init([Socket, Server, Flags, Transport]) ->
 
 match_route([], _Method, _Route, _Subdomain) ->
     {error, no_match};
+match_route([#route{type = regex,
+                    verb = Method,
+                    address = RegExp,
+                    subdomain = Subdomain,
+                    callback = HandlerFun} | Routes],
+            Method, Route, Subdomain) ->
+    case re:run(Route, RegExp, [{capture, all, list}]) of
+        {match, Groups} ->
+            {ok, HandlerFun, Groups};
+        nomatch ->
+            match_route(Routes, Method, Route, Subdomain)
+    end;
 match_route([#route{verb = Method,
                     address = Route,
                     subdomain = Subdomain,
@@ -130,6 +142,10 @@ respond(#state{body = Body, data = _Data0, route = Route,
                                               <<"404 NOT FOUND">>));
         {ok, HandlerFun} ->
             Answer = HandlerFun(Data, Parameters, Headers, InstanceName),
+            ok = handle_response(Answer, State);
+        {ok, HandlerFun, Groups} ->
+            Answer =
+                HandlerFun(Data, Parameters, Headers, InstanceName, Groups),
             ok = handle_response(Answer, State)
     end,
     do_close(State).
