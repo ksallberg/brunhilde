@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Multipart-formulär</title>
+</head>
+<body>
+
+  <h1>Exempel på multipart-form</h1>
+
+  <form action="/multipart_submit" method="post" enctype="multipart/form-data">
+
+    <label for="namn">Namn:</label><br>
+    <input type="text" id="namn" name="namn"><br><br>
+
+    <label for="meddelande">Meddelande:</label><br>
+    <textarea id="meddelande" name="meddelande"></textarea><br><br>
+
+    <!-- Hidden field -->
+    <input type="hidden" name="token" value="hemligt-värde-123">
+
+    <!-- Exempel på fil (vanligt i multipart) -->
+    <label for="fil">Välj fil:</label><br>
+    <input type="file" id="fil" name="fil"><br><br>
+
+    <button type="submit">Skicka</button>
+  </form>
+
+</body>
+</html>

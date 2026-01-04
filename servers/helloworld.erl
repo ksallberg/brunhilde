@@ -22,6 +22,15 @@ routes() ->
             address = <<"/handle_post">>,
             callback = fun handle_post/4},
 
+     #route{verb = get,
+            address = <<"/multipart">>,
+            callback = fun handle_multipart_get/4},
+
+     #route{verb = post,
+            address = <<"/multipart_submit">>,
+            callback = fun handle_multipart_post/4},
+
+
      #route{type = regex,
             verb = get,
             address = <<"^/regex/([0-9]+)/apa/([0-9]+)$">>,
@@ -68,6 +77,20 @@ handle_regex(_Data, _Parameters, _Headers, _InstanceName, MatchGroups) ->
            "</p>  </body>"
            "</html>",
     ?l2b(Html).
+
+
+handle_multipart_get(_Data, _Parameters, _Headers, _InstanceName) ->
+    {ok, Binary} = file:read_file("pages/multipart.html"),
+    Binary.
+
+handle_multipart_post(Data, _Parameters, Headers, _InstanceName) ->
+    [_Namn,
+     _Meddelande,
+     _Token,
+     File] = http_parser:parse_multipart(Data, Headers),
+    {_Headers, _FileData} = File,
+    %% file:write_file("apa.png", FileData),
+    <<"ok">>.
 
 handle_wildcard(_Data, _Parameters, _Headers, _InstanceName) ->
     <<"Error 404: i dont know what youre saying">>.

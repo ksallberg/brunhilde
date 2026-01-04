@@ -31,6 +31,8 @@
         , cookies/1
         , get_subdomain/1]).
 
+-export([ parse_multipart/2 ]).
+
 -include_lib("eunit/include/eunit.hrl").
 
 -type method() :: 'get' | 'head' | 'post' | 'put' |
@@ -165,6 +167,29 @@ response(Body, ExtraHeaders, ReturnCode) ->
     CRLF = <<"\r\n">>,
     <<Proto/binary, ReturnCode/binary, CRLF/binary,
       ExtraHeaders/binary, CRLF/binary, Body/binary>>.
+
+parse_multipart(Data, Headers) ->
+    ContentType = proplists:get_value(<<"Content-Type">>, Headers),
+    [_, Boundary] = binary:split(ContentType, <<"boundary=">>),
+    Delete = fun(<<>>) -> false;
+                (<<"--\r\n">>) -> false;
+                (_) -> true
+             end,
+
+    Parts =
+        lists:filter(Delete,
+                     binary:split(Data,
+                                  << <<"--">>/binary,
+                                     Boundary/binary>>, [global])),
+    ParsedParts = [headers(strip_rn(Part)) || Part <- Parts],
+    [{ParsedHeaders, strip_last_rn(Body)}
+     || {ParsedHeaders, Body} <- ParsedParts].
+
+strip_rn(<<_:2/binary, Rest/binary>>) ->
+    Rest.
+
+strip_last_rn(Bin) ->
+    binary:part(Bin, 0, byte_size(Bin) - 2).
 
 -ifdef(EUNIT).
 
