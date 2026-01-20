@@ -67,7 +67,7 @@
 
 -type state() :: #state{}.
 
--define(TIMEOUT, infinity).
+-define(TIMEOUT, 5000).
 -define(OKCODE, <<"200 OK">>).
 
 start_link(ListenSocket, Server, Flags, Transport) ->
@@ -225,11 +225,7 @@ handle_cast(accept, S = #state{socket=ListenSocket,
                          "transport accept ~p~n", [Reason]),
             CloseState = S#state{socket=undefined},
             {stop, normal, CloseState}
-    end;
-
-handle_cast(timeout, State) ->
-    logger:error("~p Client connection timeout.~n", [self()]),
-    {stop, normal, State}.
+    end.
 
 -spec handle_call(any(), {pid(), any()}, state()) -> {stop, tuple(), state()}.
 handle_call(Request, _From, State) ->
@@ -306,6 +302,10 @@ handle_info({tcp_closed, Socket},
 handle_info({ssl_closed, Socket},
             #state{socket=Socket} = StateData) ->
     {stop, normal, StateData};
+
+handle_info(timeout, State) ->
+    logger:error("~p Client connection timeout.~n", [self()]),
+    {stop, normal, State};
 
 handle_info(_Info, StateData) ->
     {noreply, StateData}.
