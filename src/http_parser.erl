@@ -120,7 +120,7 @@ headers(R0) ->
                      Value0
              end,
     {Rest, R2} = headers(R1),
-    {[{Key, Value1}|Rest], R2}.
+    {[{string:lowercase(Key), Value1}|Rest], R2}.
 
 % take everything until [13,10]
 % return that, and the rest of the list
@@ -148,7 +148,7 @@ cookies(CookieString) ->
               end, Cs).
 
 get_subdomain(Headers) ->
-    Host = proplists:get_value(<<"Host">>, Headers),
+    Host = proplists:get_value(<<"host">>, Headers),
     case Host of
         undefined ->
             '*';
@@ -169,7 +169,7 @@ response(Body, ExtraHeaders, ReturnCode) ->
       ExtraHeaders/binary, CRLF/binary, Body/binary>>.
 
 parse_multipart(Data, Headers) ->
-    ContentType = proplists:get_value(<<"Content-Type">>, Headers),
+    ContentType = proplists:get_value(<<"content-type">>, Headers),
     [_, Boundary] = binary:split(ContentType, <<"boundary=">>),
     Delete = fun(<<>>) -> false;
                 (<<"--\r\n">>) -> false;

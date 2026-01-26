@@ -322,8 +322,7 @@ code_change(_OldVsn, StateData, _Extra) ->
 
 -spec get_content_length([{binary(), binary()}]) -> integer().
 get_content_length(Headers) ->
-    LCHeaders = [{string:lowercase(Key), Val} || {Key, Val} <- Headers],
-    case lists:keysearch(<<"content-length">>, 1, LCHeaders) of
+    case proplists:get_value(<<"content-length">>, Headers, false) of
         false ->
             0;
         {value, {_, ConLen}} ->
