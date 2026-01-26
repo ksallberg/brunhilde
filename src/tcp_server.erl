@@ -325,7 +325,7 @@ get_content_length(Headers) ->
     case proplists:get_value(<<"content-length">>, Headers, false) of
         false ->
             0;
-        {value, {_, ConLen}} ->
+        ConLen ->
             binary_to_integer(ConLen)
     end.
 
