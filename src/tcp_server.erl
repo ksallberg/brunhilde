@@ -98,9 +98,10 @@ match_route([], _Method, _Route, _Subdomain) ->
 match_route([#route{type = regex,
                     verb = Method,
                     address = RegExp,
-                    subdomain = Subdomain,
+                    subdomain = RSubdomain,
                     callback = HandlerFun} | Routes],
-            Method, Route, Subdomain) ->
+            Method, Route, Subdomain) when Subdomain == RSubdomain;
+                                           RSubdomain == '*' ->
     case re:run(Route, RegExp, [{capture, all, list}]) of
         {match, Groups} ->
             {ok, HandlerFun, Groups};
@@ -109,9 +110,10 @@ match_route([#route{type = regex,
     end;
 match_route([#route{verb = Method,
                     address = Route,
-                    subdomain = Subdomain,
+                    subdomain = RSubdomain,
                     callback = HandlerFun} | _Routes],
-            Method, Route, Subdomain) ->
+            Method, Route, Subdomain) when Subdomain == RSubdomain;
+                                           RSubdomain == '*' ->
     {ok, HandlerFun};
 match_route([_Route|Routes], Method, Route, Subdomain) ->
     match_route(Routes, Method, Route, Subdomain).
